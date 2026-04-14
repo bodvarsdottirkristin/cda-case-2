@@ -1,3 +1,10 @@
+# Creators:
+Kristín Böðvarsdóttir
+NAME2
+NAME3
+NAME4
+NAME5
+
 # EmoPairCompete Physiological Data Analysis
 
 ## Overview
@@ -14,32 +21,12 @@ data/raw/
     └── <participant>/ # e.g. P01, P02 …
         └── <round>/   # 1, 2, 3, 4
             └── <phase>/  # pre, puzzle, post
-                ├── biosignal.csv
+                ├── BVP.csv
+                └── EDA.csv
+                └── HR.csv
                 └── response.csv
+                └── TEMP.csv
 ```
-
-### Biosignal features (`biosignal.csv`)
-For each signal (**HR**, **TEMP**, **EDA**, **EDA\_phasic**, **EDA\_tonic**) the following statistics are extracted:
-
-| Statistic | Column suffix |
-|-----------|---------------|
-| Mean      | `_mean`       |
-| Max       | `_max`        |
-| Min       | `_min`        |
-| Std       | `_std`        |
-| Kurtosis  | `_kurtosis`   |
-| Skew      | `_skew`       |
-| Slope     | `_slope`      |
-| AUC       | `_auc`        |
-
-EDA-peak metrics: `eda_peaks`, `eda_rise_time`, `eda_recovery_time`.
-
-### Questionnaire responses (`response.csv`)
-PANAS-SF affect items plus task difficulty:
-
-`frustrated`, `upset`, `hostile`, `alert`, `ashamed`, `inspired`, `nervous`, `determined`, `attentive`, `afraid`, `active`, `task_difficulty`
-
----
 
 ## Project Structure
 ```
