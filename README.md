@@ -44,13 +44,11 @@ cda-case-2/
 │   └── 03_modelling.ipynb
 ├── src/
 │   ├── __init__.py
-│   ├── data_loader.py
 │   ├── preprocessing.py
 │   ├── features.py
 │   └── model.py
 ├── tests/
 │   ├── __init__.py
-│   ├── test_data_loader.py
 │   ├── test_preprocessing.py
 │   ├── test_features.py
 │   └── test_model.py
@@ -85,14 +83,6 @@ pip install -r requirements.txt
 
 ### 4. Place the raw data
 Copy the EmoPairCompete CSV files into `data/raw/` following the directory structure shown above.
-
-### 5. Load the data
-```python
-from src.data_loader import load_dataset
-
-df = load_dataset("data/raw")
-print(df.head())
-```
 
 ---
 

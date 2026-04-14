@@ -24,21 +24,6 @@ from typing import Iterable, List
 import numpy as np
 import pandas as pd
 
-from src.data_loader import (
-    BIOSIGNAL_FEATURE_COLS,
-    QUESTIONNAIRE_COLS,
-)
-
-
-def get_biosignal_feature_cols() -> List[str]:
-    """Return the canonical list of biosignal feature column names."""
-    return list(BIOSIGNAL_FEATURE_COLS)
-
-
-def get_questionnaire_cols() -> List[str]:
-    """Return the canonical list of questionnaire column names."""
-    return list(QUESTIONNAIRE_COLS)
-
 
 def compute_delta_features(
     df: pd.DataFrame,

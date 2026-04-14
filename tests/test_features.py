@@ -11,7 +11,6 @@ from src.features import (
     get_questionnaire_cols,
     select_features_variance,
 )
-from src.data_loader import BIOSIGNAL_FEATURE_COLS, QUESTIONNAIRE_COLS
 
 
 # ---------------------------------------------------------------------------
