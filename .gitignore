@@ -44,3 +44,5 @@ results/figures/*
 !results/figures/.gitkeep
 results/tables/*
 !results/tables/.gitkeep
+
+.history/
