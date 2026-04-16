@@ -22,8 +22,11 @@ from sklearn.decomposition import SparsePCA
 
 from ..src.features import highly_corr
 
-# path to PROCESSED data!! TODO
-df = pd.read_csv(Path('../data/processed/HR_data_2.csv'))
+# preprocess dataset and save in data/processed using functions from src.preprocessing
+#TODO
+
+# path to PROCESSED data
+df = pd.read_csv(Path('../data/processed/HR_data_2_processed.csv'))
 
 # Biosignal feature distributions — numeric columns, excluding metadata
 meta_cols = ['Round', 'Phase', 'Individual', 'Puzzler', 'Cohort']

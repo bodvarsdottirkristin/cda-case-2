@@ -150,3 +150,45 @@ def normalise_features(
     scaler = StandardScaler()
     df[cols] = scaler.fit_transform(df[cols].astype(float))
     return df
+
+# global or phase-wise alternatives
+def normalise_features(
+    df: pd.DataFrame,
+    feature_cols: Iterable[str],
+    within_phase: bool = True
+) -> pd.DataFrame:
+    """Z-score normalise the specified feature columns.
+
+    Parameters
+    ----------
+    df:
+        Input DataFrame.
+    feature_cols:
+        Column names to normalise.
+    within_phase:
+        If True, normalise relative to the mean/std of each phase [cite: 54, 59-61].
+        If False, normalise relative to the entire dataset (Global).
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with normalised feature columns (copy).
+    """
+    df = df.copy()
+    cols = [c for c in feature_cols if c in df.columns]
+    if not cols:
+        return df
+
+    scaler = StandardScaler()
+    
+    if within_phase:
+        # Standardize relative to each experimental phase [cite: 59-61, 66-67]
+        # This removes the "Phase Effect" so clustering focuses on latent states [cite: 110-112]
+        df[cols] = df.groupby('Phase')[cols].transform(
+            lambda x: scaler.fit_transform(x.values.reshape(-1, 1)).flatten()
+        )
+    else:
+        # Standardize relative to the whole dataset
+        df[cols] = scaler.fit_transform(df[cols].astype(float))
+        
+    return df
