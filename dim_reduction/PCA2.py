@@ -6,7 +6,7 @@ from pathlib import Path
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA, SparsePCA
 
-from utils.high_corr import highly_corr
+from dim_reduction.utils.high_corr import highly_corr
 
 
 # =========================
