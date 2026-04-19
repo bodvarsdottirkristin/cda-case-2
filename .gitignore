@@ -1,7 +1,5 @@
 # Data files
 
-data/processed/
-!data/processed/.gitkeep
 
 # Notebook checkpoints
 .ipynb_checkpoints/
