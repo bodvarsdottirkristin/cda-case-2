@@ -1,1 +1,0 @@
-"""EmoPairCompete analysis package."""

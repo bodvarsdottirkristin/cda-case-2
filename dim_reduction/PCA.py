@@ -13,6 +13,9 @@ Insteas, if we scale wrt to each phase, cluster will focus more on "latent" emot
 3. sparse PCA or standard PCA ? I believe the first one is better in our case, bcs it allows to set some features to 0
 I use the function from sklearn, but in week8 exercises it is done explicitely
 
+added from PCA2
+1. safe standard scaler
+2. dynamical component counts inside PCA
 """
 import numpy as np
 import pandas as pd
@@ -24,7 +27,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import SparsePCA, PCA
 from sklearn.metrics import mean_squared_error
 
-from src.features import highly_corr
+from utils.high_corr import highly_corr
 
 # original dataset
 # This finds the directory where PCA.py is, then goes up to the root, then into data
@@ -48,37 +51,55 @@ remaining_biosignals = [c for c in biosignal_cols if c not in redundant]
 df_reduced.to_csv(Path('data/processed/HR_data_reduced.csv'), index=False)
 
 
-# 2. scale features on entire df
-scaler = StandardScaler()
+# 2. scale features
+phase_df = df_reduced.copy()
 
-# we can have 2 different approaches
-# GLOBAL SCALING
-abs_df = df.copy()  # full df
-abs_df[biosignal_cols] = abs_df[biosignal_cols].transform(
-    lambda x: scaler.fit_transform(x.values.reshape(-1, 1)).flatten()
-)
+# safe_standardize 
+def safe_standardize(series):
+    std = series.std(ddof=0)
+    if pd.isna(std) or std == 0:
+        return pd.Series(np.zeros(len(series)), index=series.index)
+    return (series - series.mean()) / std
+
 # PHASE-WISE SCALING depending on the phase; phases can be phase1, phase2 or phase3
-phase_df = df.copy()
-phase_df[biosignal_cols] = phase_df.groupby('Phase')[biosignal_cols].transform(
-    lambda x: scaler.fit_transform(x.values.reshape(-1, 1)).flatten()
-)
+for col in remaining_biosignals:
+    phase_df[col] = phase_df.groupby('Phase')[col].transform(safe_standardize)
+
+# Matrix for dimensionality reduction
+X = phase_df[remaining_biosignals]
+
+# Final NaN safety check
+print("Remaining NaNs before PCA:", X.isna().sum().sum())
+
+if phase_df.isna().sum().sum() > 0:
+    raise ValueError("There are still NaNs in X before PCA.")
+
+# =========================
+# 5. Standard PCA to choose number of components
+# =========================
+pca = PCA()
+X_pca = pca.fit_transform(X)
+
+explained_var = pca.explained_variance_ratio_
+cum_explained_var = np.cumsum(explained_var)
+
+threshold = 0.80
+n_components_selected = np.argmax(cum_explained_var >= threshold) + 1
+
+print(f"Original features: {len(biosignal_cols)}")
+print(f"Features after correlation drop: {len(remaining_biosignals)}")
+print(f"Number of PCA components to explain {threshold:.0%} variance: {n_components_selected}")
 
 
 
 # 3. sparse PCA on reduced dataset
-spca = SparsePCA(n_components=5, alpha=1, random_state=42) 
+spca = SparsePCA(n_components=n_components_selected, alpha=1, random_state=42) 
 pca_results = spca.fit_transform(phase_df[remaining_biosignals])
 
 # Convert to DataFrame for easy clustering
 df_pca = pd.DataFrame(
     pca_results, 
-    columns=[f'PC{i+1}' for i in range(5)],
-    index=df_reduced.index
-)
-
-df_pca = pd.DataFrame(
-    pca_results, 
-    columns=[f'PC{i+1}' for i in range(5)],
+    columns=[f'PC{i+1}' for i in range(n_components_selected)],
     index=phase_df.index
 )
 
@@ -93,11 +114,31 @@ print(f"Dimensions after Sparse PCA: {df_pca.shape[1]}")
 #----------------------------------------------------------
 # test our results
 
+# inspect SparsePCA components (selected features)
+components = pd.DataFrame(
+    spca.components_,
+    columns=remaining_biosignals,
+    index=[f'PC{i+1}' for i in range(n_components_selected)]
+)
+# Print only non-zero (or significant) features per component
+threshold = 1e-5  # adjust if needed
+
+for pc in components.index:
+    print(f"\n{pc}:")
+    
+    # Select features with non-zero weights
+    selected = components.loc[pc][abs(components.loc[pc]) > threshold]
+    
+    # Sort by importance
+    selected = selected.sort_values(key=abs, ascending=False)
+    
+    print(selected)
+
 # Test standard PCA - is sparse PCA good enough? Is the difference between the 2 negligible?
 
 # Standard PCA
 X = phase_df[remaining_biosignals]
-pca_5 = PCA(n_components=5, random_state=42).fit(X)
+pca_5 = PCA(n_components=n_components_selected, random_state=42).fit(X)
 
 # Calculate Variance Explained - built in funciton
 # Standard PCA (built-in)
