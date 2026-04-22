@@ -26,43 +26,35 @@ PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # =========================
-# 1. Load data
+# 1. Load already processed data
 # =========================
-input_path = PROJECT_ROOT / 'data' / 'raw' / 'data' / 'HR_data_2.csv'
+input_path = PROJECT_ROOT / 'data' / 'processed' / 'HR_data_2.csv'
 df = pd.read_csv(input_path)
 
 meta_cols = ['Round', 'Phase', 'Individual', 'Puzzler', 'Cohort']
+questionnaire_cols = [
+    'Frustrated', 'upset', 'hostile', 'alert', 'ashamed', 'inspired',
+    'nervous', 'attentive', 'afraid', 'active', 'determined'
+]
+
 numeric_cols = df.select_dtypes(include='number').columns.tolist()
-biosignal_cols = [c for c in numeric_cols if c not in meta_cols]
+biosignal_cols = [c for c in numeric_cols if c not in meta_cols + questionnaire_cols]
 
 
 # =========================
-# 2. Impute missing values phase-wise
-# =========================
-df[biosignal_cols] = df.groupby('Phase')[biosignal_cols].transform(
-    lambda x: x.fillna(x.mean())
-)
-
-print("Remaining NaNs after imputation:", df[biosignal_cols].isna().sum().sum())
-
-
-# =========================
-# 3. Drop highly correlated features
+# 2. Drop highly correlated features
 # =========================
 redundant = highly_corr(df[biosignal_cols], perf=0.95)
-df_reduced = df.drop(columns=redundant)
 remaining_biosignals = [c for c in biosignal_cols if c not in redundant]
 
 print(f"Original biosignal features: {len(biosignal_cols)}")
 print(f"Features after correlation drop: {len(remaining_biosignals)}")
 
-df_reduced.to_csv(PROCESSED_DIR / 'HR_data_reduced.csv', index=False)
-
 
 # =========================
-# 4. Scale features phase-wise
+# 3. Scale features phase-wise
 # =========================
-phase_df = df_reduced.copy()
+phase_df = df.copy()
 
 def safe_standardize(series):
     std = series.std(ddof=0)
@@ -81,7 +73,7 @@ if X.isna().sum().sum() > 0:
 
 
 # =========================
-# 5. UMAP in 10D for clustering
+# 4. UMAP in 10D for clustering
 # =========================
 reducer_10d = umap.UMAP(
     n_components=10,
@@ -104,7 +96,7 @@ df_umap_10d.to_csv(PROCESSED_DIR / 'HR_data_umap_10d.csv', index=False)
 
 
 # =========================
-# 6. UMAP in 2D for visualization
+# 5. UMAP in 2D for visualization
 # =========================
 reducer_2d = umap.UMAP(
     n_components=2,
@@ -126,7 +118,7 @@ df_umap_2d = pd.concat([df_umap_2d, phase_df[meta_cols]], axis=1)
 
 
 # =========================
-# 7. Plot 2D UMAP colored by Phase
+# 6. Plot 2D UMAP colored by Phase
 # =========================
 plt.figure(figsize=(8, 6))
 
@@ -149,7 +141,7 @@ plt.show()
 
 
 # =========================
-# 8. KMeans on 10D UMAP
+# 7. KMeans on 10D UMAP
 # =========================
 n_clusters = 3
 
@@ -164,7 +156,7 @@ df_umap_2d['Cluster'] = cluster_labels
 
 
 # =========================
-# 9. Plot 2D UMAP colored by KMeans cluster
+# 8. Plot 2D UMAP colored by KMeans cluster
 # =========================
 plt.figure(figsize=(8, 6))
 
@@ -187,7 +179,7 @@ plt.show()
 
 
 # =========================
-# 10. Optional: test several k values
+# 9. Optional: test several k values
 # =========================
 print("\nSilhouette scores for different k (on 10D UMAP):")
 for k in [2, 3, 4, 5, 6]:
@@ -198,7 +190,7 @@ for k in [2, 3, 4, 5, 6]:
 
 
 # =========================
-# 11. Final summary
+# 10. Final summary
 # =========================
 print("\nSaved files:")
 print(PROCESSED_DIR / 'HR_data_umap_10d.csv')
