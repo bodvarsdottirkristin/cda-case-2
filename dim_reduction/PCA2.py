@@ -63,7 +63,7 @@ def safe_standardize(series):
     return (series - series.mean()) / std
 
 for col in remaining_biosignals:
-    phase_df[col] = phase_df.groupby('Phase')[col].transform(safe_standardize)
+    phase_df[col] = phase_df.groupby('Individual')[col].transform(safe_standardize)
 
 X = phase_df[remaining_biosignals]
 
@@ -166,6 +166,6 @@ df_spca = pd.DataFrame(
 
 df_spca = pd.concat([df_spca, phase_df[meta_cols]], axis=1)
 
-df_spca.to_csv(processed_dir / 'HR_data_sparse_pca.csv', index=False)
+df_spca.to_csv(processed_dir / 'HR_data_PCA2.csv', index=False)
 
 print(f"Final dataframe shape after SparsePCA + metadata: {df_spca.shape}")
