@@ -21,17 +21,49 @@ PROCESSED_DIR = PROJECT_ROOT / 'data' / 'processed'
 RESULTS_DIR = PROJECT_ROOT / 'results' / 'tables'
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Positive / negative 
 PA_ITEMS = ['inspired', 'alert', 'attentive', 'active', 'determined']
 # 'Frustrated' retains its capital-F as it appears in HR_data_2.csv
 NA_ITEMS = ['Frustrated', 'upset', 'hostile', 'ashamed', 'nervous', 'afraid']
-META_COLS = ['Round', 'Phase', 'Individual', 'Puzzler', 'Cohort']
-
-EMOTIONAL_LABELS = {
+LABELS_PANA = {
     (True,  False): 'Engaged/Calm',
     (False, True):  'Tense/Stressed',
     (False, False): 'Drained/Disengaged',
     (True,  True):  'Alert/Anxious',
 }
+
+# Focuses on physical intensity (HR/EDA spikes) vs. quieter emotions
+HIGH_AROUSAL_ITEMS = ['alert', 'active', 'nervous', 'afraid', 'Frustrated']
+LOW_AROUSAL_ITEMS = ['inspired', 'attentive', 'determined', 'ashamed', 'upset']
+LABELS_AROUSAL = {
+    (True,  False): 'Reactive/Physiological', # High Arousal, Low Quiet
+    (False, True):  'Reflective/Internal',    # Low Arousal, High Quiet
+    (False, False): 'Baseline/Resting',       # Low both
+    (True,  True):  'Peak Involvement',       # High both
+}
+
+# Focuses on interpersonal/competitive stress vs. internal feelings
+SOCIAL_STRESS_ITEMS = ['hostile', 'Frustrated', 'ashamed']
+INTERNAL_STRESS_ITEMS = ['nervous', 'afraid', 'upset']
+LABELS_SOCIAL = {
+    (True,  False): 'Competitive/Frustrated', # High Social, Low Internal
+    (False, True):  'Internally Anxious',     # Low Social, High Internal
+    (False, False): 'Neutral/Cooperative',    # Low both
+    (True,  True):  'Overwhelmed/Conflict',   # High both
+}
+
+# Focuses on focus/determination vs. emotional distress
+ENGAGEMENT_ITEMS = ['attentive', 'determined', 'active', 'alert']
+DISTRESS_ITEMS = ['Frustrated', 'nervous', 'hostile', 'upset']
+LABELS_ENGAGEMENT = {
+    (True,  False): 'Focused/Locked-in',  # High Engagement, Low Distress
+    (False, True):  'Stressed/Struggling', # Low Engagement, High Distress
+    (False, False): 'Disengaged/Resting',  # Low both
+    (True,  True):  'High-Pressure Flow',  # High both
+}
+
+META_COLS = ['Round', 'Phase', 'Individual', 'Puzzler', 'Cohort']
+
 
 # uploading raw data and reduced ones
 def load_data():
@@ -40,13 +72,13 @@ def load_data():
     return X, X_pca2
 
 # compute panas scores on original data, but attach cols to reduced dataset (we do not keep full 66 features)
-def compute_panas_scores(df, df_reduced):
+def compute_panas_scores(df, df_reduced, pos_ITEMS, neg_ITEMS):
     X = df_reduced.copy()
-    X['pa_score'] = df[PA_ITEMS].mean(axis=1)
-    X['na_score'] = df[NA_ITEMS].mean(axis=1)
+    X['pa_score'] = df[pos_ITEMS].mean(axis=1)
+    X['na_score'] = df[neg_ITEMS].mean(axis=1)
     return X
 
-def label_clusters(means):
+def label_clusters(means, EMOTIONAL_LABELS):
     # means: array (k, 2), col 0 = pa_score, col 1 = na_score
     # Uses >= for median split; ties fall into the high side.
     pa_med = np.median(means[:, 0])
@@ -70,7 +102,7 @@ def main():
 
     # 3. Compute PA/NA scores from the questionnaire items
     # These items are based on the I-PANAS-SF scale [cite: 111, 112]
-    df_with_scores = compute_panas_scores(raw, processed)
+    df_with_scores = compute_panas_scores(raw, processed, PA_ITEMS, NA_ITEMS)
 
     # 4. Integrate Biological and Psychological data
     # We ensure rows align by merging on experimental keys [cite: 100, 106]
@@ -90,7 +122,7 @@ def main():
     
     # 6. Assign labels based on the PA/NA quadrants
     # Uses the median split logic to define 'Tense', 'Calm', etc.
-    panas_labels = label_clusters(gmm_panas.means_)
+    panas_labels = label_clusters(gmm_panas.means_, LABELS_PANA)
     df['emotional_cluster_id'] = gmm_panas.predict(X_panas)
     df['emotional_label'] = [panas_labels[i] for i in df['emotional_cluster_id']]
 
