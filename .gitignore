@@ -43,3 +43,5 @@ results/tables/*
 !results/tables/.gitkeep
 
 .history/
+
+gmm_copy/panas_change.py
