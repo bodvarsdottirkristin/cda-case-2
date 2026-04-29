@@ -63,7 +63,7 @@ def safe_standardize(series):
     return (series - series.mean()) / std
 
 for col in remaining_biosignals:
-    phase_df[col] = phase_df.groupby('Phase')[col].transform(safe_standardize)
+    phase_df[col] = phase_df.groupby('Individual')[col].transform(safe_standardize)
 
 X = phase_df[remaining_biosignals]
 
@@ -77,8 +77,8 @@ if X.isna().sum().sum() > 0:
 # =========================
 reducer_10d = umap.UMAP(
     n_components=10,
-    n_neighbors=15,
-    min_dist=0.1,
+    n_neighbors=50,
+    min_dist=0.0,
     metric='euclidean',
     random_state=42
 )
@@ -95,7 +95,7 @@ df_umap_10d = pd.concat([df_umap_10d, phase_df[meta_cols]], axis=1)
 df_umap_10d.to_csv(PROCESSED_DIR / 'HR_data_umap_10d.csv', index=False)
 
 
-# =========================
+'''# =========================
 # 5. UMAP in 2D for visualization
 # =========================
 reducer_2d = umap.UMAP(
@@ -139,7 +139,7 @@ plt.tight_layout()
 plt.savefig(FIGURES_DIR / 'umap_2d_by_phase.png', dpi=300)
 plt.show()
 
-
+'''
 # =========================
 # 7. KMeans on 10D UMAP
 # =========================
@@ -152,10 +152,10 @@ sil_score = silhouette_score(X_umap_10d, cluster_labels)
 print(f"Silhouette score on 10D UMAP with k={n_clusters}: {sil_score:.3f}")
 
 df_umap_10d['Cluster'] = cluster_labels
-df_umap_2d['Cluster'] = cluster_labels
+#df_umap_2d['Cluster'] = cluster_labels
 
 
-# =========================
+'''# =========================
 # 8. Plot 2D UMAP colored by KMeans cluster
 # =========================
 plt.figure(figsize=(8, 6))
@@ -163,7 +163,6 @@ plt.figure(figsize=(8, 6))
 for cluster in sorted(df_umap_2d['Cluster'].unique()):
     mask = df_umap_2d['Cluster'] == cluster
     plt.scatter(
-        df_umap_2d.loc[mask, 'UMAP1'],
         df_umap_2d.loc[mask, 'UMAP2'],
         label=f'Cluster {cluster}',
         alpha=0.8
@@ -175,7 +174,7 @@ plt.title(f'2D UMAP visualization + KMeans on 10D UMAP (k={n_clusters})')
 plt.legend(title='Cluster')
 plt.tight_layout()
 plt.savefig(FIGURES_DIR / f'umap_2d_kmeans_from_10d_k{n_clusters}.png', dpi=300)
-plt.show()
+plt.show()'''
 
 
 # =========================
@@ -194,5 +193,5 @@ for k in [2, 3, 4, 5, 6]:
 # =========================
 print("\nSaved files:")
 print(PROCESSED_DIR / 'HR_data_umap_10d.csv')
-print(FIGURES_DIR / 'umap_2d_by_phase.png')
-print(FIGURES_DIR / f'umap_2d_kmeans_from_10d_k{n_clusters}.png')
+#print(FIGURES_DIR / 'umap_2d_by_phase.png')
+#print(FIGURES_DIR / f'umap_2d_kmeans_from_10d_k{n_clusters}.png')

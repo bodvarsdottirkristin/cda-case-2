@@ -1,0 +1,83 @@
+Cluster evaluation summary
+================================
+
+Experiment settings
+-------------------
+model: Conv1DAutoencoder
+latent_dim: 16
+window_size: 60
+step_size: 30
+epochs: 30
+best_k: 2
+best_silhouette: 0.35732969641685486
+final_training_loss: 0.0024223107597388235
+embedding_method: none
+
+Dataset summary
+---------------
+Phase-level samples: 312
+Clusters: 2
+Phase values: 3
+Cohort values: 6
+Round values: 4
+Individual values: 8
+
+Alignment metrics
+-----------------
+  variable       ari      nmi  n_unique_values  n_samples_used
+     Phase -0.003521 0.000211                3             312
+    Cohort  0.243260 0.369386                6             312
+     Round -0.003270 0.000990                4             312
+Individual  0.002630 0.022188                8             312
+
+Interpretation guide
+--------------------
+ARI/NMI near 0 means weak correspondence with the metadata variable.
+Higher Phase alignment supports phase-related/emotional-state structure.
+Higher Cohort or Individual alignment suggests baseline/session effects.
+
+Phase x Cluster
+---------------
+Cluster   0   1
+Phase          
+phase1   34  70
+phase2   36  68
+phase3   36  68
+
+Cohort x Cluster
+----------------
+Cluster   0   1
+Cohort         
+D1_1     12  84
+D1_2     72   0
+D1_3      0  48
+D1_4      5  43
+D1_5      0  24
+D1_6     17   7
+
+Round x Cluster
+---------------
+Cluster   0   1
+Round          
+round_1  25  53
+round_2  25  53
+round_3  27  51
+round_4  29  49
+
+Individual x Cluster
+--------------------
+Cluster      0   1
+Individual        
+ID_1        23  49
+ID_2        26  46
+ID_3        16  32
+ID_4        12  36
+ID_5        12  12
+ID_6        12  12
+ID_7         5   7
+ID_8         0  12
+
+Questionnaire profiles
+----------------------
+Saved to questionnaire_cluster_profiles.csv.
+Use this to inspect whether clusters differ in frustration, nervousness, upset, alertness, difficulty, etc.

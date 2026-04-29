@@ -1,0 +1,23 @@
+{
+  "model": "Conv1DAutoencoder",
+  "signals": [
+    "HR",
+    "EDA",
+    "TEMP"
+  ],
+  "latent_dim": 8,
+  "window_size": 60,
+  "step_size": 30,
+  "epochs": 30,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 4,
+  "best_silhouette": 0.35107776522636414,
+  "final_training_loss": 0.0030785965744727925,
+  "embedding_method": "none",
+  "processed_file": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/data/processed/autoencoder/autoencoder_windows.npz",
+  "output_dir": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/advanced/outputs/conv_ae_8",
+  "note": "K-Means was fitted on phase-level latent vectors, not on PCA/t-SNE."
+}

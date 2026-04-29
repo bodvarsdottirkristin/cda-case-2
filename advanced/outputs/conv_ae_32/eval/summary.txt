@@ -1,0 +1,86 @@
+Cluster evaluation summary
+================================
+
+Experiment settings
+-------------------
+model: Conv1DAutoencoder
+latent_dim: 32
+window_size: 60
+step_size: 30
+epochs: 30
+best_k: 2
+best_silhouette: 0.34489211440086365
+final_training_loss: 0.006560157789032401
+embedding_method: none
+
+Dataset summary
+---------------
+Phase-level samples: 312
+Clusters: 2
+Phase values: 3
+Cohort values: 6
+Round values: 4
+Individual values: 8
+
+Alignment metrics
+-----------------
+  variable       ari      nmi  n_unique_values  n_samples_used
+     Phase -0.002083 0.001293                3             312
+    Cohort  0.219802 0.350674                6             312
+     Round -0.001803 0.002284                4             312
+Individual  0.004812 0.031013                8             312
+
+Interpretation guide
+--------------------
+ARI/NMI near 0 means weak correspondence with the metadata variable.
+Higher Phase alignment supports phase-related/emotional-state structure.
+Higher Cohort or Individual alignment suggests baseline/session effects.
+
+Phase x Cluster
+---------------
+Cluster   0   1
+Phase          
+phase1   26  78
+phase2   27  77
+phase3   31  73
+
+Cohort x Cluster
+----------------
+Cluster   0   1
+Cohort         
+D1_1      2  94
+D1_2     64   8
+D1_3      0  48
+D1_4      2  46
+D1_5      0  24
+D1_6     16   8
+
+Round x Cluster
+---------------
+Cluster   0   1
+Round          
+round_1  20  58
+round_2  20  58
+round_3  19  59
+round_4  25  53
+
+Individual x Cluster
+--------------------
+Cluster      0   1
+Individual        
+ID_1        18  54
+ID_2        24  48
+ID_3         6  42
+ID_4        12  36
+ID_5        12  12
+ID_6        10  14
+ID_7         2  10
+ID_8         0  12
+
+Questionnaire profiles
+----------------------
+Saved to questionnaire_cluster_profiles.csv.
+Use this to inspect whether clusters differ in frustration, nervousness, upset, alertness, difficulty, etc.
+
+
+The Conv1D autoencoder successfully learned a compact representation of 60-second HR, EDA, and TEMP windows, reaching a final reconstruction loss of 0.0066. K-Means clustering on phase-level latent vectors selected k=2 with a silhouette score of 0.345, indicating moderate geometric structure in the latent space. However, cluster evaluation showed almost no alignment with experimental phase: Phase ARI was -0.002 and Phase NMI was 0.001. The phase-cluster crosstab showed nearly identical cluster distributions across pre-puzzle, puzzle, and post-puzzle phases. In contrast, the clusters aligned more strongly with cohort, with Cohort ARI = 0.220 and NMI = 0.351. This suggests that the learned representation captures cohort or acquisition-session effects more strongly than latent emotional states.
