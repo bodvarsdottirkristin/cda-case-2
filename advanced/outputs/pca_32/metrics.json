@@ -1,0 +1,29 @@
+{
+  "model": "PCA",
+  "n_components": 32,
+  "representation": "flattened 60-second HR/EDA/TEMP windows",
+  "aggregation": "mean PCA scores per Cohort/Individual/Round/Phase",
+  "processed_file": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/data/processed/autoencoder/autoencoder_windows.npz",
+  "output_dir": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/advanced/outputs/pca_32",
+  "standardize_flattened_features": false,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 4,
+  "best_silhouette": 0.388724684715271,
+  "cumulative_explained_variance": 0.9998844861984253,
+  "note": "K-Means was fitted on phase-level PCA scores.",
+  "evaluation": {
+    "Phase_ari": -0.0051002166692768755,
+    "Phase_nmi": 0.00223291911843759,
+    "Puzzler_ari": 0.019542400703455823,
+    "Puzzler_nmi": 0.06399055626604937,
+    "parent_ari": 0.1115085774048896,
+    "parent_nmi": 0.19008829875512304,
+    "Cohort_ari": 0.17792926911417986,
+    "Cohort_nmi": 0.28491383621903305,
+    "Round_ari": 0.004604994790447464,
+    "Round_nmi": 0.032259694174733,
+    "Individual_ari": 0.035962985909967125,
+    "Individual_nmi": 0.11914706334959228
+  }
+}

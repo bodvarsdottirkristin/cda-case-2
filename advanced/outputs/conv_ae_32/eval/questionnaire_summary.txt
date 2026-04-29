@@ -1,0 +1,44 @@
+Questionnaire / emotion cluster check
+======================================
+
+Number of phase-level samples: 312
+Number of clusters: 2
+Questionnaire-like numeric variables found: 14
+
+Variables checked
+-----------------
+- upset
+- hostile
+- alert
+- ashamed
+- inspired
+- nervous
+- determined
+- attentive
+- afraid
+- active
+- frustrated
+- Puzzler
+- difficulty
+- parent
+
+Largest cluster differences
+----------------------------
+  variable  cluster_with_highest_mean  highest_cluster_mean  cluster_with_lowest_mean  lowest_cluster_mean  mean_difference  standardized_difference
+    active                          1              2.691630                         0             2.178571         0.513059                 0.437218
+difficulty                          0              4.131579                         1             2.964539         1.167040                 0.382626
+frustrated                          1              2.206140                         0             1.523810         0.682331                 0.343543
+  inspired                          1              2.278761                         0             1.928571         0.350190                 0.340665
+determined                          1              3.008850                         0             2.654762         0.354088                 0.320717
+ attentive                          1              2.867841                         0             2.559524         0.308318                 0.276818
+    afraid                          1              1.066079                         0             1.011905         0.054175                 0.198129
+   ashamed                          1              1.250000                         0             1.142857         0.107143                 0.195155
+     alert                          1              2.245614                         0             2.047619         0.197995                 0.190924
+    parent                          1              0.512821                         0             0.444444         0.068376                 0.136038
+
+Interpretation guide
+--------------------
+Look for variables with large mean_difference and standardized_difference.
+If frustration, nervousness, upset, hostile, afraid, or difficulty are clearly higher in one cluster,
+that cluster may have some emotional interpretation.
+If all differences are small, the clusters are probably not emotionally meaningful.

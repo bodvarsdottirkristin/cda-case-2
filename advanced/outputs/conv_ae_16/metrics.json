@@ -1,0 +1,37 @@
+{
+  "model": "Conv1DAutoencoder",
+  "signals": [
+    "HR",
+    "EDA",
+    "TEMP"
+  ],
+  "latent_dim": 16,
+  "window_size": 60,
+  "step_size": 30,
+  "epochs": 30,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 2,
+  "best_silhouette": 0.35732969641685486,
+  "final_training_loss": 0.0024223107597388235,
+  "embedding_method": "none",
+  "processed_file": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/data/processed/autoencoder/autoencoder_windows.npz",
+  "output_dir": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/advanced/outputs/conv_ae_16",
+  "note": "K-Means was fitted on phase-level latent vectors, not on PCA/t-SNE.",
+  "evaluation": {
+    "Phase_ari": -0.003520655383540628,
+    "Phase_nmi": 0.00021129086339817497,
+    "Puzzler_ari": 0.004170351572012663,
+    "Puzzler_nmi": 0.006636729221170437,
+    "parent_ari": -0.005744481063465469,
+    "parent_nmi": 0.0019974493992318157,
+    "Cohort_ari": 0.24326042208695886,
+    "Cohort_nmi": 0.3693864187097301,
+    "Round_ari": -0.0032698625981324734,
+    "Round_nmi": 0.0009898159596084947,
+    "Individual_ari": 0.002630282085547236,
+    "Individual_nmi": 0.022187556166505064
+  }
+}
