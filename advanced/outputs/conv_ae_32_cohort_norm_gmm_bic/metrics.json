@@ -1,0 +1,31 @@
+{
+  "model": "GMM",
+  "input_representation_dir": "advanced/outputs/conv_ae_32_cohort_norm",
+  "clustering_method": "GaussianMixture",
+  "covariance_type": "full",
+  "standardize_features": false,
+  "selection_metric": "bic",
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 3,
+  "best_silhouette": 0.28117239475250244,
+  "best_bic": -33553.80159708882,
+  "best_aic": -39849.532958984375,
+  "n_samples": 312,
+  "n_features": 32,
+  "note": "GMM was fitted on an existing phase-level representation. The number of components was selected using the chosen selection_metric. Evaluation should be run with evaluate_clusters.py.",
+  "evaluation": {
+    "Phase_ari": -0.002710978556177175,
+    "Phase_nmi": 0.0035162819444557922,
+    "Puzzler_ari": -0.002617083812871287,
+    "Puzzler_nmi": 0.003950306995163412,
+    "parent_ari": 0.08470723317175252,
+    "parent_nmi": 0.1400609232674646,
+    "Cohort_ari": 0.003640678437607142,
+    "Cohort_nmi": 0.014702903436643815,
+    "Round_ari": 0.006927863742144319,
+    "Round_nmi": 0.015773912202244462,
+    "Individual_ari": 0.04208407558239805,
+    "Individual_nmi": 0.10785618510379666
+  }
+}

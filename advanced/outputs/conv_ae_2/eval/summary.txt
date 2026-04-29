@@ -18,6 +18,8 @@ Dataset summary
 Phase-level samples: 312
 Clusters: 4
 Phase values: 3
+Puzzler values: 2
+parent values: 2
 Cohort values: 6
 Round values: 4
 Individual values: 8
@@ -26,6 +28,8 @@ Alignment metrics
 -----------------
   variable       ari      nmi  n_unique_values  n_samples_used
      Phase -0.004420 0.002486                3             312
+   Puzzler  0.025109 0.045232                2             216
+    parent  0.469559 0.474863                2              96
     Cohort  0.234227 0.295238                6             312
      Round  0.002175 0.011176                4             312
 Individual  0.061153 0.174580                8             312
@@ -34,7 +38,8 @@ Interpretation guide
 --------------------
 ARI/NMI near 0 means weak correspondence with the metadata variable.
 Higher Phase alignment supports phase-related/emotional-state structure.
-Higher Cohort or Individual alignment suggests baseline/session effects.
+Higher Puzzler or parent alignment suggests role-related physiological structure.
+Higher Cohort, Individual, or Round alignment suggests baseline/session confounds.
 
 Phase x Cluster
 ---------------
@@ -43,6 +48,20 @@ Phase
 phase1   26  23  45  10
 phase2   32  20  40  12
 phase3   31  23  38  12
+
+Puzzler x Cluster
+-----------------
+Cluster   0   1   2   3
+Puzzler                
+0.0      30  19  45  14
+1.0      44  32  30   2
+
+parent x Cluster
+----------------
+Cluster   0   1   2   3
+parent                 
+0.0      11  15   4  18
+1.0       4   0  44   0
 
 Cohort x Cluster
 ----------------
@@ -81,3 +100,4 @@ Questionnaire profiles
 ----------------------
 Saved to questionnaire_cluster_profiles.csv.
 Use this to inspect whether clusters differ in frustration, nervousness, upset, alertness, difficulty, etc.
+Note: role variables such as Puzzler and parent are excluded from questionnaire profiles and evaluated separately above.

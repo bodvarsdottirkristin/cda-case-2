@@ -19,5 +19,19 @@
   "embedding_method": "none",
   "processed_file": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/data/processed/autoencoder/autoencoder_windows.npz",
   "output_dir": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/advanced/outputs/conv_ae_4",
-  "note": "K-Means was fitted on phase-level latent vectors, not on PCA/t-SNE."
+  "note": "K-Means was fitted on phase-level latent vectors, not on PCA/t-SNE.",
+  "evaluation": {
+    "Phase_ari": -0.002531423467922636,
+    "Phase_nmi": 0.0011412471727100116,
+    "Puzzler_ari": 0.004170351572012663,
+    "Puzzler_nmi": 0.006636729221170437,
+    "parent_ari": -0.0047085655428645,
+    "parent_nmi": 0.0024273096918786376,
+    "Cohort_ari": 0.23932815613046715,
+    "Cohort_nmi": 0.372631013957992,
+    "Round_ari": -0.0023865416473295214,
+    "Round_nmi": 0.001931430525286268,
+    "Individual_ari": 0.0034403080173646184,
+    "Individual_nmi": 0.02243841329382238
+  }
 }

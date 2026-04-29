@@ -47,6 +47,20 @@ def infer_advanced_dir() -> Path:
 ADVANCED_DIR = infer_advanced_dir()
 
 
+# Variables used to interpret clusters.
+# Phase is the main experimental-state variable.
+# Puzzler and parent are role variables.
+# Cohort, Round, and Individual are possible confounds.
+ALIGNMENT_COLUMNS = [
+    "Phase",
+    "Puzzler",
+    "parent",
+    "Cohort",
+    "Round",
+    "Individual",
+]
+
+
 def safe_alignment_metrics(df: pd.DataFrame, label_col: str) -> dict[str, object]:
     """Compute ARI and NMI between one metadata variable and cluster labels."""
     usable = df[[label_col, "Cluster"]].dropna()
@@ -74,7 +88,12 @@ def safe_alignment_metrics(df: pd.DataFrame, label_col: str) -> dict[str, object
 
 
 def get_questionnaire_columns(df: pd.DataFrame) -> list[str]:
-    """Return numeric columns that may represent questionnaire/emotion metadata."""
+    """
+    Return numeric columns that may represent questionnaire/emotion metadata.
+
+    Role/metadata columns such as Puzzler and parent are excluded because
+    they are useful for role-alignment checks, but they are not emotion scores.
+    """
     excluded_cols = {
         "Cohort",
         "Individual",
@@ -85,6 +104,8 @@ def get_questionnaire_columns(df: pd.DataFrame) -> list[str]:
         "WindowEndIndex",
         "WindowStartTime",
         "WindowEndTime",
+        "Puzzler",
+        "parent",
     }
 
     numeric_cols = df.select_dtypes(include="number").columns
@@ -92,12 +113,8 @@ def get_questionnaire_columns(df: pd.DataFrame) -> list[str]:
 
 
 def compute_alignment_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    """Compute ARI/NMI against available metadata labels."""
-    label_cols = [
-        col for col in ["Phase", "Cohort", "Round", "Individual"]
-        if col in df.columns
-    ]
-
+    """Compute ARI/NMI against available metadata and role labels."""
+    label_cols = [col for col in ALIGNMENT_COLUMNS if col in df.columns]
     rows = [safe_alignment_metrics(df, col) for col in label_cols]
     return pd.DataFrame(rows)
 
@@ -183,6 +200,7 @@ def write_summary(
             useful_keys = [
                 "model",
                 "latent_dim",
+                "n_components",
                 "window_size",
                 "step_size",
                 "epochs",
@@ -190,6 +208,10 @@ def write_summary(
                 "best_silhouette",
                 "final_training_loss",
                 "embedding_method",
+                "clustering_method",
+                "covariance_type",
+                "linkage",
+                "selection_metric",
             ]
 
             for key in useful_keys:
@@ -203,7 +225,7 @@ def write_summary(
         f.write(f"Phase-level samples: {len(df)}\n")
         f.write(f"Clusters: {df['Cluster'].nunique()}\n")
 
-        for col in ["Phase", "Cohort", "Round", "Individual"]:
+        for col in ALIGNMENT_COLUMNS:
             if col in df.columns:
                 f.write(f"{col} values: {df[col].nunique()}\n")
 
@@ -217,10 +239,11 @@ def write_summary(
         f.write(
             "ARI/NMI near 0 means weak correspondence with the metadata variable.\n"
             "Higher Phase alignment supports phase-related/emotional-state structure.\n"
-            "Higher Cohort or Individual alignment suggests baseline/session effects.\n\n"
+            "Higher Puzzler or parent alignment suggests role-related physiological structure.\n"
+            "Higher Cohort, Individual, or Round alignment suggests baseline/session confounds.\n\n"
         )
 
-        for col in ["Phase", "Cohort", "Round", "Individual"]:
+        for col in ALIGNMENT_COLUMNS:
             if col in df.columns:
                 f.write(f"{col} x Cluster\n")
                 f.write("-" * (len(col) + 10) + "\n")
@@ -234,6 +257,8 @@ def write_summary(
                 "Saved to questionnaire_cluster_profiles.csv.\n"
                 "Use this to inspect whether clusters differ in frustration, "
                 "nervousness, upset, alertness, difficulty, etc.\n"
+                "Note: role variables such as Puzzler and parent are excluded "
+                "from questionnaire profiles and evaluated separately above.\n"
             )
         else:
             f.write("No numeric questionnaire columns found.\n")
