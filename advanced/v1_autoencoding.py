@@ -23,6 +23,9 @@ Expected project layout:
         └── processed/
             └── autoencoder/
                 └── autoencoder_windows.npz
+
+HOW TO RUN:
+python advanced/v1_autoencoding.py --latent-dim 32 --output-dir advanced/outputs/new/conv_ae_32
 """
 
 from __future__ import annotations

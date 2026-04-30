@@ -81,10 +81,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset-dir", type=Path, default=default_dataset_dir)
 
     parser.add_argument(
-        "--normalization",
-        choices=["individual", "cohort", "individual_round", "cohort_round"],
-        default="individual",
-        help="Baseline normalization strategy.",
+    "--normalization",
+    choices=[
+        "individual",
+        "cohort",
+        "cohort_individual",
+        "individual_round",
+        "cohort_individual_round",
+        "cohort_round",
+    ],
+    default="cohort",
+    help="Which normalized processed-data file to use.",
     )
 
     parser.add_argument(

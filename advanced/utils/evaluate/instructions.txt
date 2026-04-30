@@ -1,0 +1,10 @@
+python advanced/utils/evaluate/evaluate_clusters.py \
+  --output-dir advanced/outputs/new/conv_ae_32 \
+  --update-metrics-json
+
+python advanced/utils/evaluate/cluster_drivers.py \
+  --output-dir advanced/outputs/new/conv_ae_32
+
+python advanced/utils/evaluate/final_biosignal_cluster_report.py \
+  --output-dir advanced/outputs/new/conv_ae_32 \
+  --processed-file data/processed/autoencoder/autoencoder_windows.npz

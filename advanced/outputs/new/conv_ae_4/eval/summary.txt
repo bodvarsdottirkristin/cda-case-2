@@ -1,0 +1,94 @@
+Cluster evaluation summary
+================================
+
+Experiment settings
+-------------------
+model: Conv1DAutoencoder
+latent_dim: 4
+window_size: 60
+step_size: 30
+epochs: 30
+best_k: 2
+best_silhouette: 0.38676077127456665
+final_training_loss: 0.006399115674013709
+embedding_method: none
+
+Dataset summary
+---------------
+Phase-level samples: 312
+Clusters: 2
+Phase values: 3
+Puzzler values: 2
+Cohort values: 6
+Round values: 4
+Individual values: 8
+
+Alignment metrics
+-----------------
+  variable       ari      nmi  n_unique_values  n_samples_used
+     Phase -0.003042 0.000688                3             312
+   Puzzler  0.001228 0.003437                2             312
+    Cohort  0.233607 0.354596                6             312
+     Round -0.002642 0.001705                4             312
+Individual  0.003867 0.022340                8             312
+
+Interpretation guide
+--------------------
+ARI/NMI near 0 means weak correspondence with the metadata variable.
+Higher Phase alignment supports phase-related/emotional-state structure.
+Higher Puzzler or parent alignment suggests role-related physiological structure.
+Higher Cohort, Individual, or Round alignment suggests baseline/session confounds.
+
+Phase x Cluster
+---------------
+Cluster   0   1
+Phase          
+phase1   33  71
+phase2   37  67
+phase3   36  68
+
+Puzzler x Cluster
+-----------------
+Cluster   0    1
+Puzzler         
+0        48  108
+1        58   98
+
+Cohort x Cluster
+----------------
+Cluster   0   1
+Cohort         
+D1_1     13  83
+D1_2     72   0
+D1_3      0  48
+D1_4      6  42
+D1_5      0  24
+D1_6     15   9
+
+Round x Cluster
+---------------
+Cluster   0   1
+Round          
+round_1  26  52
+round_2  24  54
+round_3  26  52
+round_4  30  48
+
+Individual x Cluster
+--------------------
+Cluster      0   1
+Individual        
+ID_1        23  49
+ID_2        24  48
+ID_3        18  30
+ID_4        12  36
+ID_5        12  12
+ID_6        12  12
+ID_7         5   7
+ID_8         0  12
+
+Questionnaire profiles
+----------------------
+Saved to questionnaire_cluster_profiles.csv.
+Use this to inspect whether clusters differ in frustration, nervousness, upset, alertness, difficulty, etc.
+Note: role variables such as Puzzler and parent are excluded from questionnaire profiles and evaluated separately above.

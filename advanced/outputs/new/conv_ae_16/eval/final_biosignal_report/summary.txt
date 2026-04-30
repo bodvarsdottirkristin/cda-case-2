@@ -1,0 +1,38 @@
+Final biosignal cluster report
+===============================
+
+Experiment folder: advanced/outputs/new/conv_ae_16
+
+Categorical association tests
+-------------------------------
+variable       ari      nmi  chi_square_p_value  cramers_v  n_samples_used
+  Cohort  0.243260 0.369386        3.189196e-46   0.845651             312
+ Puzzler -0.000256 0.002199        4.027406e-01   0.047371             312
+   Round -0.003270 0.000990        8.898350e-01   0.044889             312
+   Phase -0.003521 0.000211        9.444493e-01   0.019141             312
+
+Top discriminating representation features
+-------------------------------------------
+ cluster_vs_rest    feature  mean_difference      p_value  cohens_d
+               0  feature_8         1.643858 0.000000e+00  2.984547
+               1  feature_8        -1.643858 0.000000e+00 -2.984547
+               1 feature_10        -1.419661 0.000000e+00 -2.900749
+               0 feature_10         1.419661 0.000000e+00  2.900749
+               0  feature_0        -1.262886 0.000000e+00 -2.628526
+               1  feature_0         1.262886 0.000000e+00  2.628526
+               0 feature_13         1.361338 1.019053e-38  2.137967
+               1 feature_13        -1.361338 1.019053e-38 -2.137967
+               1 feature_15         1.479337 2.398061e-36  1.960825
+               0 feature_15        -1.479337 2.398061e-36 -1.960825
+               0 feature_12        -1.601338 9.075747e-33 -1.881385
+               1 feature_12         1.601338 9.075747e-33  1.881385
+               0  feature_7        -1.572731 3.410502e-34 -1.821772
+               1  feature_7         1.572731 3.410502e-34  1.821772
+               0  feature_9         1.315637 1.115899e-32  1.772293
+
+Interpretation guide
+--------------------
+ARI/NMI evaluate how similar cluster labels are to known metadata labels.
+Chi-square p-values test whether cluster membership is associated with a categorical variable.
+Cramer's V measures association strength: near 0 = weak, around 0.3 = moderate, 0.5+ = strong.
+Mann-Whitney U and Cohen's d identify which representation dimensions differ most between clusters.

@@ -5,19 +5,21 @@ This script creates a reusable processed-data file with the same structure
 expected by v1_autoencoding.py, but with extra baseline normalization.
 
 Important metadata behavior:
-    The role variable is standardized in data_processing.py:
+    data_processing.py standardizes:
+        participant_ID / particpant_ID -> participant_ID
         puzzler / Puzzler / parent / Parent -> Puzzler
 
-Therefore, this normalized pipeline automatically uses the corrected Puzzler
-column because it loads raw data through load_raw_dataset().
+Therefore, this normalized pipeline automatically uses the corrected metadata
+because it loads raw data through load_raw_dataset().
 
 It saves files such as:
 
-    data/processed/autoencoder/autoencoder_windows_individual_norm.npz
+    data/processed/autoencoder/autoencoder_windows_participant_norm.npz
     data/processed/autoencoder/autoencoder_windows_cohort_norm.npz
-    data/processed/autoencoder/autoencoder_windows_individual_round_norm.npz
+    data/processed/autoencoder/autoencoder_windows_participant_round_norm.npz
 
-Use this when the normal autoencoder pipeline finds mostly cohort/session effects.
+Use this when the normal autoencoder pipeline finds mostly cohort/session or
+participant-baseline effects.
 """
 
 from __future__ import annotations
@@ -64,14 +66,13 @@ def normalize_signals_by_group(
     For each group:
         x_norm = (x - group_mean) / group_std
 
-    Example groups:
-        ["Individual"]
+    Recommended groups:
+        ["participant_ID"]
+        ["participant_ID", "Round"]
         ["Cohort"]
-        ["Individual", "Round"]
-        ["Cohort", "Round"]
 
-    This helps test whether clusters are driven by baseline differences
-    between subjects, cohorts, or recording sessions.
+    participant_ID is preferred over folder-level Individual because
+    Individual is only a local folder name and is not globally reliable.
     """
     df = df.copy()
 
@@ -144,15 +145,30 @@ def build_normalized_autoencoder_file(
     Build normalized processed data and save it as one .npz file.
 
     The raw dataset is loaded through data_processing.load_raw_dataset(),
-    so inconsistent role columns are already standardized:
+    so metadata is already standardized:
 
+        participant_ID / particpant_ID -> participant_ID
         puzzler / Puzzler / parent / Parent -> Puzzler
     """
     normalization_to_groups = {
-        "individual": ["Individual"],
+        # Recommended participant-level normalization.
+        "participant": ["participant_ID"],
+
+        # More aggressive: removes participant baseline separately per round.
+        "participant_round": ["participant_ID", "Round"],
+
+        # Session-level normalization.
         "cohort": ["Cohort"],
-        "individual_round": ["Individual", "Round"],
+
+        # Optional session-round normalization.
         "cohort_round": ["Cohort", "Round"],
+
+        # Backward-compatible options, but less recommended.
+        # Individual is the folder-level ID, not the real participant identifier.
+        "individual": ["Individual"],
+        "individual_round": ["Individual", "Round"],
+        "cohort_individual": ["Cohort", "Individual"],
+        "cohort_individual_round": ["Cohort", "Individual", "Round"],
     }
 
     if normalization not in normalization_to_groups:
@@ -174,6 +190,13 @@ def build_normalized_autoencoder_file(
     print(f"Loaded rows before normalization: {len(full_df):,}")
     print(f"Applying normalization: {normalization}")
     print(f"Normalization groups: {group_cols}")
+    print(f"Window grouping keys from data_processing.META_KEYS: {META_KEYS}")
+
+    if "participant_ID" in full_df.columns:
+        print("participant_ID values before windowing:")
+        print(full_df["participant_ID"].value_counts(dropna=False))
+    else:
+        print("Warning: participant_ID column not found in loaded raw dataframe.")
 
     if "Puzzler" in full_df.columns:
         print("Puzzler values before windowing:")
@@ -225,6 +248,14 @@ def build_normalized_autoencoder_file(
         f"{X_scaled.shape[1]} seconds x {X_scaled.shape[2]} signals"
     )
 
+    if "participant_ID" in window_meta.columns:
+        print("participant_ID values in window metadata:")
+        print(window_meta["participant_ID"].value_counts(dropna=False))
+
+    if "Individual" in window_meta.columns:
+        print("Folder-level Individual values in window metadata:")
+        print(window_meta["Individual"].value_counts(dropna=False))
+
     if "Puzzler" in window_meta.columns:
         print("Puzzler values in window metadata:")
         print(window_meta["Puzzler"].value_counts(dropna=False))
@@ -255,9 +286,21 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--normalization",
-        choices=["individual", "cohort", "individual_round", "cohort_round"],
-        default="individual",
-        help="Which baseline normalization to apply.",
+        choices=[
+            "participant",
+            "participant_round",
+            "cohort",
+            "cohort_round",
+            "individual",
+            "individual_round",
+            "cohort_individual",
+            "cohort_individual_round",
+        ],
+        default="participant",
+        help=(
+            "Which baseline normalization to apply. "
+            "Recommended: participant or cohort."
+        ),
     )
 
     parser.add_argument("--window-size", type=int, default=60)

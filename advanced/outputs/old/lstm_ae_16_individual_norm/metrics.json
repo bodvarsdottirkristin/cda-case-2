@@ -1,0 +1,30 @@
+{
+  "model": "LSTMAutoencoder",
+  "processed_file": "data/processed/autoencoder/autoencoder_windows_individual_norm.npz",
+  "output_dir": "advanced/outputs/lstm_ae_16_individual_norm",
+  "latent_dim": 16,
+  "hidden_dim": 64,
+  "num_layers": 1,
+  "dropout": 0.0,
+  "epochs": 30,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 3,
+  "best_silhouette": 0.3654070496559143,
+  "final_training_loss": 0.04117175853914685,
+  "note": "K-Means was fitted on phase-level LSTM autoencoder latents.",
+  "evaluation": {
+    "Phase_ari": -0.0020816781308081204,
+    "Phase_nmi": 0.003908935326089089,
+    "Puzzler_ari": 0.0364939832192537,
+    "Puzzler_nmi": 0.033711439598343794,
+    "Cohort_ari": 0.20016184573909335,
+    "Cohort_nmi": 0.25971090366080674,
+    "Round_ari": 0.0015078530436186948,
+    "Round_nmi": 0.009471076840698272,
+    "Individual_ari": -0.0014013331013635474,
+    "Individual_nmi": 0.015240305398390223
+  }
+}
