@@ -87,14 +87,32 @@ n_noise = (labels == -1).sum()
 print(f"\nFinal — Clusters: {n_clusters}, Noise: {n_noise} ({n_noise/len(labels)*100:.1f}%)")
 
 # =========================
-# 5. Plot clusters on first two PCA components
+# 5. Plot: DBSCAN clusters vs Phase labels (side by side)
 # =========================
-plt.figure(figsize=(8, 6))
-scatter = plt.scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', s=20)
-plt.colorbar(scatter, label='Cluster')
-plt.xlabel('PC1')
-plt.ylabel('PC2')
-plt.title(f'DBSCAN clusters (eps={eps}, min_samples={min_samples})')
+ax1_label = feature_cols[0]
+ax2_label = feature_cols[1]
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# Left: coloured by DBSCAN cluster assignment
+scatter = axes[0].scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', s=20, alpha=0.8)
+plt.colorbar(scatter, ax=axes[0], label='Cluster')
+axes[0].set_xlabel(ax1_label)
+axes[0].set_ylabel(ax2_label)
+axes[0].set_title(f'DBSCAN clusters (eps={eps}, min_samples={min_samples})')
+
+# Right: coloured by Phase variable
+phases = sorted(df['Phase'].dropna().unique())
+cmap_phase = plt.get_cmap('tab10')
+for i, phase in enumerate(phases):
+    mask = (df['Phase'] == phase).values
+    axes[1].scatter(X[mask, 0], X[mask, 1], label=phase,
+                    color=cmap_phase(i), s=20, alpha=0.8)
+axes[1].set_xlabel(ax1_label)
+axes[1].set_ylabel(ax2_label)
+axes[1].set_title('Coloured by Phase')
+axes[1].legend(title='Phase')
+
 plt.tight_layout()
 plt.savefig(FIGURES_DIR / f'dbscan_clusters_{csv_name}.png', dpi=300)
 
