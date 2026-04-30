@@ -54,7 +54,6 @@ ADVANCED_DIR = infer_advanced_dir()
 ALIGNMENT_COLUMNS = [
     "Phase",
     "Puzzler",
-    "parent",
     "Cohort",
     "Round",
     "Individual",

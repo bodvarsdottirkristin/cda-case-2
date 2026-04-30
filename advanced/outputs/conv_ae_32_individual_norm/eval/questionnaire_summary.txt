@@ -3,7 +3,7 @@ Questionnaire / emotion cluster check
 
 Number of phase-level samples: 312
 Number of clusters: 2
-Questionnaire-like numeric variables found: 14
+Questionnaire-like numeric variables found: 12
 
 Variables checked
 -----------------
@@ -18,9 +18,7 @@ Variables checked
 - afraid
 - active
 - frustrated
-- Puzzler
 - difficulty
-- parent
 
 Largest cluster differences
 ----------------------------
@@ -29,12 +27,12 @@ difficulty                          0              3.949153                     
 frustrated                          1              2.276923                         0             1.598291         0.678632                 0.341681
     active                          1              2.697436                         0             2.310345         0.387091                 0.329871
  attentive                          1              2.912821                         0             2.568966         0.343855                 0.308724
-    parent                          0              0.600000                         1             0.454545         0.145455                 0.289390
      alert                          1              2.302564                         0             2.008547         0.294017                 0.283517
   inspired                          1              2.290155                         0             2.008547         0.281608                 0.273949
-   Puzzler                          0              0.574713                         1             0.449612         0.125100                 0.249621
    nervous                          0              1.461538                         1             1.333333         0.128205                 0.222116
 determined                          1              2.989691                         0             2.784483         0.205208                 0.185868
+   hostile                          0              1.085470                         1             1.041026         0.044444                 0.163568
+    afraid                          1              1.061538                         0             1.034483         0.027056                 0.098949
 
 Interpretation guide
 --------------------

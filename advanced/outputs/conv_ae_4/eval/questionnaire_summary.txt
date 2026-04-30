@@ -3,7 +3,7 @@ Questionnaire / emotion cluster check
 
 Number of phase-level samples: 312
 Number of clusters: 2
-Questionnaire-like numeric variables found: 14
+Questionnaire-like numeric variables found: 12
 
 Variables checked
 -----------------
@@ -18,9 +18,7 @@ Variables checked
 - afraid
 - active
 - frustrated
-- Puzzler
 - difficulty
-- parent
 
 Largest cluster differences
 ----------------------------
@@ -33,8 +31,8 @@ determined                          1              3.023923                     
 frustrated                          1              2.209524                         0             1.637255         0.572269                 0.288128
      alert                          1              2.285714                         0             2.000000         0.285714                 0.275511
    hostile                          0              1.098039                         1             1.038095         0.059944                 0.220610
-   Puzzler                          0              0.559524                         1             0.462121         0.097403                 0.194354
-    parent                          1              0.512821                         0             0.444444         0.068376                 0.136038
+   ashamed                          1              1.238095                         0             1.186275         0.051821                 0.094389
+     upset                          1              1.361905                         0             1.313725         0.048179                 0.078014
 
 Interpretation guide
 --------------------

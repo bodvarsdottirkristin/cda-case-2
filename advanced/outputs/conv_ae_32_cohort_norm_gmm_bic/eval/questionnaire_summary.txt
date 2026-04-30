@@ -3,7 +3,7 @@ Questionnaire / emotion cluster check
 
 Number of phase-level samples: 312
 Number of clusters: 3
-Questionnaire-like numeric variables found: 14
+Questionnaire-like numeric variables found: 12
 
 Variables checked
 -----------------
@@ -18,23 +18,21 @@ Variables checked
 - afraid
 - active
 - frustrated
-- Puzzler
 - difficulty
-- parent
 
 Largest cluster differences
 ----------------------------
   variable  cluster_with_highest_mean  highest_cluster_mean  cluster_with_lowest_mean  lowest_cluster_mean  mean_difference  standardized_difference
-    parent                          1              0.947368                         0             0.322581         0.624788                 1.243050
    nervous                          0              1.517544                         2             1.205882         0.311662                 0.539955
    ashamed                          1              1.354839                         2             1.125000         0.229839                 0.418639
  attentive                          0              3.026316                         1             2.596774         0.429542                 0.385657
 determined                          0              3.035088                         1             2.741935         0.293152                 0.265524
-   Puzzler                          1              0.581395                         0             0.469880         0.111516                 0.222515
   inspired                          1              2.290323                         2             2.067164         0.223158                 0.217089
     afraid                          0              1.078947                         1             1.032258         0.046689                 0.170754
      alert                          0              2.289474                         2             2.117647         0.171827                 0.165690
     active                          1              2.645161                         2             2.466667         0.178495                 0.152109
+frustrated                          0              2.157895                         1             1.903226         0.254669                 0.128222
+   hostile                          2              1.066176                         1             1.032258         0.033918                 0.124829
 
 Interpretation guide
 --------------------

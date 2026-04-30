@@ -4,6 +4,13 @@ Create normalized processed data for the autoencoder pipeline.
 This script creates a reusable processed-data file with the same structure
 expected by v1_autoencoding.py, but with extra baseline normalization.
 
+Important metadata behavior:
+    The role variable is standardized in data_processing.py:
+        puzzler / Puzzler / parent / Parent -> Puzzler
+
+Therefore, this normalized pipeline automatically uses the corrected Puzzler
+column because it loads raw data through load_raw_dataset().
+
 It saves files such as:
 
     data/processed/autoencoder/autoencoder_windows_individual_norm.npz
@@ -19,7 +26,6 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Sequence
-from io import StringIO
 
 import numpy as np
 import pandas as pd
@@ -62,13 +68,19 @@ def normalize_signals_by_group(
         ["Individual"]
         ["Cohort"]
         ["Individual", "Round"]
+        ["Cohort", "Round"]
 
-    This helps remove baseline differences between subjects, cohorts,
-    or subject-round recording sessions.
+    This helps test whether clusters are driven by baseline differences
+    between subjects, cohorts, or recording sessions.
     """
     df = df.copy()
 
-    missing = [col for col in list(signal_cols) + list(group_cols) if col not in df.columns]
+    missing = [
+        col
+        for col in list(signal_cols) + list(group_cols)
+        if col not in df.columns
+    ]
+
     if missing:
         raise ValueError(f"Missing columns required for normalization: {missing}")
 
@@ -94,9 +106,10 @@ def save_processed_file(
     normalization_group_cols: Sequence[str],
 ) -> None:
     """
-    Save one reusable processed-data file.
+    Save one reusable normalized processed-data file.
 
-    This uses the same format expected by v1_autoencoding.py.
+    This uses the same .npz structure expected by v1_autoencoding.py /
+    v2_autoencoding.py.
     """
     processed_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -129,6 +142,11 @@ def build_normalized_autoencoder_file(
 ) -> None:
     """
     Build normalized processed data and save it as one .npz file.
+
+    The raw dataset is loaded through data_processing.load_raw_dataset(),
+    so inconsistent role columns are already standardized:
+
+        puzzler / Puzzler / parent / Parent -> Puzzler
     """
     normalization_to_groups = {
         "individual": ["Individual"],
@@ -146,6 +164,7 @@ def build_normalized_autoencoder_file(
     group_cols = normalization_to_groups[normalization]
 
     print(f"Loading raw dataset from: {dataset_dir}")
+
     full_df = load_raw_dataset(
         dataset_dir=dataset_dir,
         signals=signals,
@@ -155,6 +174,18 @@ def build_normalized_autoencoder_file(
     print(f"Loaded rows before normalization: {len(full_df):,}")
     print(f"Applying normalization: {normalization}")
     print(f"Normalization groups: {group_cols}")
+
+    if "Puzzler" in full_df.columns:
+        print("Puzzler values before windowing:")
+        print(full_df["Puzzler"].value_counts(dropna=False))
+    else:
+        print("Warning: Puzzler column not found in loaded raw dataframe.")
+
+    if "parent" in full_df.columns or "Parent" in full_df.columns:
+        print(
+            "Warning: parent/Parent column is still present. "
+            "It should normally be merged into Puzzler by data_processing.py."
+        )
 
     normalized_df = normalize_signals_by_group(
         df=full_df,
@@ -171,7 +202,8 @@ def build_normalized_autoencoder_file(
     )
 
     # Here X_raw is already normalized because it comes from normalized_df.
-    # To stay compatible with v1_autoencoding.py, we store it both as X_raw and X_scaled.
+    # To stay compatible with v1_autoencoding.py / v2_autoencoding.py,
+    # we store it both as X_raw and X_scaled.
     X_scaled = X_raw.astype(np.float32)
     X_conv1d = to_conv1d_format(X_scaled)
 
@@ -192,6 +224,16 @@ def build_normalized_autoencoder_file(
         f"Created windows: {X_scaled.shape[0]:,} windows x "
         f"{X_scaled.shape[1]} seconds x {X_scaled.shape[2]} signals"
     )
+
+    if "Puzzler" in window_meta.columns:
+        print("Puzzler values in window metadata:")
+        print(window_meta["Puzzler"].value_counts(dropna=False))
+
+    if "parent" in window_meta.columns or "Parent" in window_meta.columns:
+        print(
+            "Warning: parent/Parent is still present in window metadata. "
+            "It should normally be merged into Puzzler."
+        )
 
 
 # ---------------------------------------------------------------------
@@ -233,7 +275,10 @@ def parse_args() -> argparse.Namespace:
         "--processed-file",
         type=Path,
         default=None,
-        help="Optional output .npz file. If omitted, a name is generated automatically.",
+        help=(
+            "Optional output .npz file. "
+            "If omitted, a name is generated automatically."
+        ),
     )
 
     return parser.parse_args()
