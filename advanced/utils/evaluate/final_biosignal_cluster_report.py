@@ -2,9 +2,8 @@
 Final biosignal cluster report.
 
 Generates:
-- top-2D plot with GMM ellipses
-- top-2D plot colored by Phase
-- contingency tables and heatmaps for Phase, Cohort, Round, Puzzler
+- combined top-2D subplot with empirical cluster ellipses and Phase coloring
+- contingency table heatmaps and contingency tables in summary.txt for Phase, Cohort, Round, Puzzler
 - ARI, NMI, chi-square p-value, Cramer's V
 - discriminating biosignal features between clusters using Mann-Whitney U + Cohen's d
 
@@ -43,7 +42,8 @@ import pandas as pd
 from scipy.stats import chi2_contingency, mannwhitneyu
 from sklearn.decomposition import PCA
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
-from sklearn.mixture import GaussianMixture
+import seaborn as sns
+from matplotlib.patches import Ellipse
 
 
 CATEGORICAL_VARS = ["Phase", "Cohort", "Round", "Puzzler"]
@@ -126,7 +126,7 @@ def plot_contingency_table(
     """
     fig, ax = plt.subplots(figsize=(8, max(4, 0.45 * len(table))))
 
-    im = ax.imshow(table.values, aspect="auto")
+    im = ax.imshow(table.values, aspect="auto", cmap='viridis')
 
     ax.set_xticks(np.arange(table.shape[1]))
     ax.set_yticks(np.arange(table.shape[0]))
@@ -154,97 +154,107 @@ def plot_contingency_table(
     plt.close(fig)
 
 
-def plot_gmm_ellipses(
+def draw_empirical_ellipses(
+    ax,
+    X: np.ndarray,
+    labels: np.ndarray,
+    palette: str,
+    alpha: float = 0.2,
+) -> None:
+    """
+    Draw empirical covariance ellipses for each cluster.
+
+    The ellipses are estimated directly from the points assigned to each
+    label, not from a fitted GMM.
+    """
+    unique_labels = np.unique(labels)
+    colors = sns.color_palette(palette, n_colors=len(unique_labels))
+
+    for idx, c in enumerate(unique_labels):
+        X_c = X[labels == c]
+
+        if len(X_c) < 2:
+            continue
+
+        mean = np.mean(X_c, axis=0)
+        cov = np.cov(X_c, rowvar=False)
+        v, w = np.linalg.eigh(cov)
+        u = w[0] / np.linalg.norm(w[0])
+        angle = np.arctan2(u[1], u[0]) * 180 / np.pi
+        v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+
+        ell = Ellipse(mean, v[0], v[1], angle=180 + angle, color=colors[idx])
+        ell.set_clip_box(ax.bbox)
+        ell.set_alpha(alpha)
+        ax.add_artist(ell)
+
+
+def plot_top2_cluster_and_phase(
     Z2: np.ndarray,
     labels: np.ndarray,
-    out_path: Path,
-) -> None:
-    """
-    Plot top-2D representation colored by cluster with GMM ellipses.
-
-    The GMM is fitted only for visualization in 2D.
-    It does not change the cluster labels.
-    """
-    fig, ax = plt.subplots(figsize=(8, 6))
-
-    scatter = ax.scatter(
-        Z2[:, 0],
-        Z2[:, 1],
-        c=labels,
-        s=35,
-        alpha=0.8,
-    )
-
-    n_clusters = len(np.unique(labels))
-
-    gmm = GaussianMixture(
-        n_components=n_clusters,
-        covariance_type="full",
-        random_state=42,
-    )
-    gmm.fit(Z2)
-
-    for mean, cov in zip(gmm.means_, gmm.covariances_):
-        vals, vecs = np.linalg.eigh(cov)
-
-        order = vals.argsort()[::-1]
-        vals = vals[order]
-        vecs = vecs[:, order]
-
-        angle = np.degrees(np.arctan2(vecs[1, 0], vecs[0, 0]))
-
-        for scale in [1, 2]:
-            width, height = 2 * scale * np.sqrt(vals)
-
-            ellipse = plt.matplotlib.patches.Ellipse(
-                xy=mean,
-                width=width,
-                height=height,
-                angle=angle,
-                fill=False,
-                linewidth=1.5,
-            )
-            ax.add_patch(ellipse)
-
-    ax.set_title("Top 2 dimensions with GMM ellipses")
-    ax.set_xlabel("Dimension 1")
-    ax.set_ylabel("Dimension 2")
-    plt.colorbar(scatter, ax=ax, label="Cluster")
-    plt.tight_layout()
-    fig.savefig(out_path, dpi=150)
-    plt.close(fig)
-
-
-def plot_by_phase(
-    Z2: np.ndarray,
     df: pd.DataFrame,
     out_path: Path,
+    palette: str = "viridis",
 ) -> None:
     """
-    Plot top-2D representation colored by experimental Phase.
+    Save a single figure with two aligned subplots:
+        1. top-2D representation colored by cluster with empirical ellipses
+        2. top-2D representation colored by experimental Phase
     """
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6), sharex=True, sharey=True)
+    ax_cluster, ax_phase = axes
+
+    unique_labels = np.unique(labels)
+    cluster_colors = sns.color_palette(palette, n_colors=len(unique_labels))
+    label_to_color = dict(zip(unique_labels, cluster_colors))
+
+    for label in unique_labels:
+        mask = labels == label
+        ax_cluster.scatter(
+            Z2[mask, 0],
+            Z2[mask, 1],
+            s=35,
+            alpha=0.8,
+            color=label_to_color[label],
+            label=f"Cluster {label}",
+        )
+
+    draw_empirical_ellipses(
+        ax=ax_cluster,
+        X=Z2,
+        labels=labels,
+        palette=palette,
+        alpha=0.2,
+    )
+
+    ax_cluster.set_title("Top 2 dimensions with empirical ellipses")
+    ax_cluster.set_xlabel("Dimension 1")
+    ax_cluster.set_ylabel("Dimension 2")
+    ax_cluster.legend(title="Cluster")
 
     if "Phase" not in df.columns:
-        ax.scatter(Z2[:, 0], Z2[:, 1], s=35, alpha=0.8)
+        ax_phase.scatter(Z2[:, 0], Z2[:, 1], s=35, alpha=0.8)
     else:
         phases = sorted(df["Phase"].dropna().unique())
+        phase_colors = sns.color_palette(palette='Set1', n_colors=len(phases))
 
-        for phase in phases:
+        for phase, color in zip(phases, phase_colors):
             mask = df["Phase"] == phase
-            ax.scatter(
+            ax_phase.scatter(
                 Z2[mask, 0],
                 Z2[mask, 1],
                 s=35,
                 alpha=0.8,
+                color=color,
                 label=str(phase),
             )
 
-        ax.legend(title="Phase")
+        ax_phase.legend(title="Phase")
 
-    ax.set_title("Top 2 dimensions colored by Phase")
-    ax.set_xlabel("Dimension 1")
-    ax.set_ylabel("Dimension 2")
+    ax_phase.set_title("Top 2 dimensions colored by Phase")
+    ax_phase.set_xlabel("Dimension 1")
+    ax_phase.set_ylabel("Dimension 2")
+
     plt.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
@@ -253,11 +263,10 @@ def plot_by_phase(
 # ---------------------------------------------------------------------
 # Categorical association tests
 # ---------------------------------------------------------------------
-def categorical_tests(df: pd.DataFrame, eval_dir: Path) -> pd.DataFrame:
+def categorical_tests(df: pd.DataFrame, eval_dir: Path) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     """
-    For each categorical variable, save:
-        - contingency table CSV
-        - contingency heatmap PNG
+    For each categorical variable, save a contingency heatmap PNG and
+    collect the contingency table for writing into summary.txt.
 
     Also compute:
         - ARI
@@ -266,6 +275,7 @@ def categorical_tests(df: pd.DataFrame, eval_dir: Path) -> pd.DataFrame:
         - Cramér's V
     """
     rows = []
+    contingency_tables = {}
 
     for var in CATEGORICAL_VARS:
         if var not in df.columns:
@@ -277,8 +287,7 @@ def categorical_tests(df: pd.DataFrame, eval_dir: Path) -> pd.DataFrame:
             continue
 
         table = pd.crosstab(usable[var], usable["Cluster"])
-
-        table.to_csv(eval_dir / f"contingency_{var}.csv")
+        contingency_tables[var] = table
 
         plot_contingency_table(
             table=table,
@@ -307,7 +316,7 @@ def categorical_tests(df: pd.DataFrame, eval_dir: Path) -> pd.DataFrame:
     if not out.empty:
         out = out.sort_values("cramers_v", ascending=False)
 
-    return out
+    return out, contingency_tables
 
 
 # ---------------------------------------------------------------------
@@ -533,6 +542,7 @@ def write_summary(
     eval_dir: Path,
     output_dir: Path,
     tests_df: pd.DataFrame,
+    contingency_tables: dict[str, pd.DataFrame],
     features_df: pd.DataFrame,
     feature_source: str,
 ) -> None:
@@ -546,8 +556,7 @@ def write_summary(
 
         f.write("Generated figures\n")
         f.write("-" * 17 + "\n")
-        f.write("gmm_top2_ellipses.png\n")
-        f.write("top2_by_phase.png\n")
+        f.write("top2_cluster_phase_subplot.png\n")
         for var in CATEGORICAL_VARS:
             f.write(f"contingency_{var}.png\n")
         f.write("\n")
@@ -567,6 +576,20 @@ def write_summary(
             ]
             f.write(tests_df[cols].to_string(index=False))
             f.write("\n\n")
+
+        f.write("Contingency tables\n")
+        f.write("-" * 18 + "\n")
+        if not contingency_tables:
+            f.write("No contingency tables available.\n\n")
+        else:
+            for var in CATEGORICAL_VARS:
+                table = contingency_tables.get(var)
+                if table is None:
+                    continue
+
+                f.write(f"{var} x Cluster\n")
+                f.write(table.to_string())
+                f.write("\n\n")
 
         f.write("Top discriminating features\n")
         f.write("-" * 27 + "\n")
@@ -667,23 +690,20 @@ def main() -> None:
     # ------------------------------------------------------------
     Z2 = get_top2_projection(X)
 
-    plot_gmm_ellipses(
+    plot_top2_cluster_and_phase(
         Z2=Z2,
         labels=labels,
-        out_path=eval_dir / "gmm_top2_ellipses.png",
-    )
-
-    plot_by_phase(
-        Z2=Z2,
         df=df,
-        out_path=eval_dir / "top2_by_phase.png",
+        out_path=eval_dir / "top2_cluster_phase_subplot.png",
+        palette="viridis",
     )
 
     # ------------------------------------------------------------
     # Categorical tests + contingency tables/heatmaps
     # ------------------------------------------------------------
-    tests_df = categorical_tests(df, eval_dir)
-    tests_df.to_csv(eval_dir / "categorical_tests.csv", index=False)
+    tests_df, contingency_tables = categorical_tests(df, eval_dir)
+    #Not saving test csv
+    #tests_df.to_csv(eval_dir / "categorical_tests.csv", index=False) 
 
     # ------------------------------------------------------------
     # Discriminating features
@@ -720,6 +740,7 @@ def main() -> None:
         eval_dir=eval_dir,
         output_dir=output_dir,
         tests_df=tests_df,
+        contingency_tables=contingency_tables,
         features_df=features_df,
         feature_source=feature_source,
     )

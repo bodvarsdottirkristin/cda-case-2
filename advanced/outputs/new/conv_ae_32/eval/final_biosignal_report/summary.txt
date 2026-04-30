@@ -5,8 +5,7 @@ Experiment folder: advanced/outputs/new/conv_ae_32
 
 Generated figures
 -----------------
-gmm_top2_ellipses.png
-top2_by_phase.png
+top2_cluster_phase_subplot.png
 contingency_Phase.png
 contingency_Cohort.png
 contingency_Round.png
@@ -19,6 +18,39 @@ variable       ari      nmi  chi_square_p_value  cramers_v  n_samples_used
    Round -0.001813 0.002552        6.592159e-01   0.071629             312
    Phase -0.003152 0.000390        9.005739e-01   0.025909             312
  Puzzler -0.002722 0.000037        1.000000e+00   0.000000             312
+
+Contingency tables
+------------------
+Phase x Cluster
+Cluster   0   1
+Phase          
+phase1   73  31
+phase2   72  32
+phase3   70  34
+
+Cohort x Cluster
+Cluster   0   1
+Cohort         
+D1_1     90   6
+D1_2      0  72
+D1_3     48   0
+D1_4     46   2
+D1_5     24   0
+D1_6      7  17
+
+Round x Cluster
+Cluster   0   1
+Round          
+round_1  55  23
+round_2  57  21
+round_3  53  25
+round_4  50  28
+
+Puzzler x Cluster
+Cluster    0   1
+Puzzler         
+0.0      108  48
+1.0      107  49
 
 Top discriminating features
 ---------------------------

@@ -3,6 +3,15 @@ Final biosignal cluster report
 
 Experiment folder: advanced/outputs/new/conv_ae_16
 
+Generated figures
+-----------------
+gmm_top2_ellipses.png
+top2_by_phase.png
+contingency_Phase.png
+contingency_Cohort.png
+contingency_Round.png
+contingency_Puzzler.png
+
 Categorical association tests
 -------------------------------
 variable       ari      nmi  chi_square_p_value  cramers_v  n_samples_used
@@ -11,28 +20,38 @@ variable       ari      nmi  chi_square_p_value  cramers_v  n_samples_used
    Round -0.003270 0.000990        8.898350e-01   0.044889             312
    Phase -0.003521 0.000211        9.444493e-01   0.019141             312
 
-Top discriminating representation features
--------------------------------------------
- cluster_vs_rest    feature  mean_difference      p_value  cohens_d
-               0  feature_8         1.643858 0.000000e+00  2.984547
-               1  feature_8        -1.643858 0.000000e+00 -2.984547
-               1 feature_10        -1.419661 0.000000e+00 -2.900749
-               0 feature_10         1.419661 0.000000e+00  2.900749
-               0  feature_0        -1.262886 0.000000e+00 -2.628526
-               1  feature_0         1.262886 0.000000e+00  2.628526
-               0 feature_13         1.361338 1.019053e-38  2.137967
-               1 feature_13        -1.361338 1.019053e-38 -2.137967
-               1 feature_15         1.479337 2.398061e-36  1.960825
-               0 feature_15        -1.479337 2.398061e-36 -1.960825
-               0 feature_12        -1.601338 9.075747e-33 -1.881385
-               1 feature_12         1.601338 9.075747e-33  1.881385
-               0  feature_7        -1.572731 3.410502e-34 -1.821772
-               1  feature_7         1.572731 3.410502e-34  1.821772
-               0  feature_9         1.315637 1.115899e-32  1.772293
+Top discriminating features
+---------------------------
+Feature source: biosignal_features_from_processed_windows
+
+ cluster_vs_rest     feature  mean_difference      p_value  cohens_d
+               1 TEMP_median        -1.673024 1.308028e-45 -2.775129
+               0 TEMP_median         1.673024 1.308028e-45  2.775129
+               1    TEMP_min        -1.675374 1.465186e-45 -2.768007
+               0    TEMP_min         1.675374 1.465186e-45  2.768007
+               0   TEMP_mean         1.668482 1.173052e-45  2.765045
+               1   TEMP_mean        -1.668482 1.173052e-45 -2.765045
+               0    TEMP_max         1.642832 7.862874e-45  2.665194
+               1    TEMP_max        -1.642832 7.862874e-45 -2.665194
+               0     EDA_max         1.561624 1.079333e-31  1.790349
+               1     EDA_max        -1.561624 1.079333e-31 -1.790349
+               1    EDA_mean        -1.277524 9.087108e-32 -1.639662
+               0    EDA_mean         1.277524 9.087108e-32  1.639662
+               0  EDA_median         1.277182 6.853983e-32  1.634426
+               1  EDA_median        -1.277182 6.853983e-32 -1.634426
+               1     EDA_min        -0.961446 2.799519e-24 -1.386991
+               0     EDA_min         0.961446 2.799519e-24  1.386991
+               1     EDA_std        -0.125120 6.037781e-25 -1.381528
+               0     EDA_std         0.125120 6.037781e-25  1.381528
+               0      HR_std        -0.094426 2.530792e-04 -0.285212
+               1      HR_std         0.094426 2.530792e-04  0.285212
 
 Interpretation guide
 --------------------
 ARI/NMI evaluate how similar cluster labels are to known metadata labels.
 Chi-square p-values test whether cluster membership is associated with a categorical variable.
 Cramer's V measures association strength: near 0 = weak, around 0.3 = moderate, 0.5+ = strong.
-Mann-Whitney U and Cohen's d identify which representation dimensions differ most between clusters.
+Mann-Whitney U tests whether feature values differ between a cluster and the remaining clusters.
+Cohen's d measures the size of that difference. Larger absolute values indicate stronger discriminating features.
+If --processed-file was provided, discriminating features are biosignal summaries such as HR_mean or EDA_std.
+Otherwise, discriminating features are latent/PCA dimensions.
