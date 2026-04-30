@@ -12,16 +12,25 @@ FIGURES_DIR = Path(__file__).resolve().parent / 'figures'
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 sys.path.append(str(PROJECT_ROOT))
 
+if len(sys.argv) < 2:
+    print("Usage: python DBSCAN.py NAME_OF_CSV_FILE")
+    sys.exit(1)
+
+csv_name = sys.argv[1]
+
 # =========================
 # 1. Load SparsePCA-reduced data
 # =========================
-df = pd.read_csv(PROJECT_ROOT / 'data' / 'processed' / 'HR_data_PCA2.csv')
+df = pd.read_csv(PROJECT_ROOT / 'data' / 'processed' / 'final' / f'{csv_name}.csv')
 
 meta_cols = ['Round', 'Phase', 'Individual', 'Puzzler', 'Cohort']
-pc_cols = [c for c in df.columns if c.startswith('PC')]
+if 'umap' in csv_name.lower():
+    feature_cols = [c for c in df.columns if c.startswith('UMAP')]
+else:
+    feature_cols = [c for c in df.columns if c.startswith('PC')]
 
-X = df[pc_cols].values
-print(f"Using {len(pc_cols)} PCA components, {len(df)} samples")
+X = df[feature_cols].values
+print(f"Using {len(feature_cols)} features, {len(df)} samples")
 
 # =========================
 # 2. k-distance plot to guide eps selection
@@ -38,7 +47,7 @@ plt.ylabel(f'{k}-NN distance')
 plt.title('k-distance plot (use elbow to pick eps)')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(FIGURES_DIR / 'dbscan_kdistance.png', dpi=300)
+plt.savefig(FIGURES_DIR / f'dbscan_kdistance_{csv_name}.png', dpi=300)
 
 # =========================
 # 3. Scan for good eps/min_samples
@@ -71,14 +80,14 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title(f'DBSCAN clusters (eps={eps}, min_samples={min_samples})')
 plt.tight_layout()
-plt.savefig(FIGURES_DIR / 'dbscan_clusters.png', dpi=300)
+plt.savefig(FIGURES_DIR / f'dbscan_clusters_{csv_name}.png', dpi=300)
 
 # =========================
 # 6. Save results
 # =========================
 df_out = df.copy()
 df_out['cluster'] = labels
-df_out.to_csv(PROJECT_ROOT / 'data' / 'processed' / 'HR_data_dbscan.csv', index=False)
+df_out.to_csv(PROJECT_ROOT / 'data' / 'processed' / 'final'/ f'{csv_name}_dbscan.csv', index=False)
 print(f"Saved with cluster labels: {df_out.shape}")
 
 plt.show()
