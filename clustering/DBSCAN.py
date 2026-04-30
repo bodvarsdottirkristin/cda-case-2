@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics import silhouette_score
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIGURES_DIR = Path(__file__).resolve().parent / 'figures'
@@ -50,21 +51,36 @@ plt.tight_layout()
 plt.savefig(FIGURES_DIR / f'dbscan_kdistance_{csv_name}.png', dpi=300)
 
 # =========================
-# 3. Scan for good eps/min_samples
+# 3. Scan for good eps/min_samples using silhouette score
 # =========================
+best_score = -1
+best_params = None
+best_labels = None
+
 for eps in [0.1, 0.3, 0.5, 0.8, 1.0, 1.5, 2.0, 3.0, 5.0]:
     for min_s in [3, 5]:
         labels = DBSCAN(eps=eps, min_samples=min_s).fit_predict(X)
         n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
         n_noise = (labels == -1).sum()
-        print(f"eps={eps}, min_samples={min_s}: clusters={n_clusters}, noise={n_noise} ({n_noise/len(labels)*100:.1f}%)")
+        # silhouette requires at least 2 clusters and at least 1 non-noise point
+        mask = labels != -1
+        if n_clusters >= 2 and mask.sum() > 1:
+            score = silhouette_score(X[mask], labels[mask])
+        else:
+            score = -1
+        print(f"eps={eps}, min_samples={min_s}: clusters={n_clusters}, noise={n_noise} ({n_noise/len(labels)*100:.1f}%), silhouette={score:.3f}")
+        if score > best_score:
+            best_score = score
+            best_params = (eps, min_s)
+            best_labels = labels
+
+eps, min_samples = best_params
+labels = best_labels
+print(f"\nBest params: eps={eps}, min_samples={min_samples}, silhouette={best_score:.3f}")
 
 # =========================
-# 4. Fit DBSCAN with chosen parameters
+# 4. Fit DBSCAN with best parameters
 # =========================
-eps = 5.0
-min_samples = 5
-labels = DBSCAN(eps=eps, min_samples=min_samples).fit_predict(X)
 
 n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
 n_noise = (labels == -1).sum()
