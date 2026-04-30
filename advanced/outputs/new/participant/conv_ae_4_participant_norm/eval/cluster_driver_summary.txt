@@ -1,0 +1,39 @@
+Cluster driver analysis
+========================
+
+Goal
+----
+This analysis identifies which variables are most associated with cluster membership. It helps explain whether clusters are driven by experimental phase, role, cohort/session effects, individual differences, or questionnaire variables.
+
+Categorical metadata drivers
+----------------------------
+variable      p_value  cramers_v interpretation  n_samples_used
+  Cohort 1.827336e-20   0.572298    very strong             312
+   Round 3.429548e-01   0.103371       moderate             312
+ Puzzler 7.340742e-01   0.019232      very weak             312
+   Phase 9.500027e-01   0.018132      very weak             312
+
+Questionnaire / numeric drivers
+---------------------------------
+      variable  p_value  epsilon_squared interpretation  highest_mean_cluster  lowest_mean_cluster  mean_difference
+      inspired 0.006857         0.020487      very weak                     0                    1         0.258827
+    frustrated 0.033836         0.011300      very weak                     0                    1         0.366020
+       ashamed 0.067153         0.007585      very weak                     0                    1         0.114664
+       nervous 0.207658         0.001896      very weak                     0                    1         0.093128
+         upset 0.252603         0.000996      very weak                     0                    1         0.072990
+        active 0.416098        -0.001096      very weak                     0                    1         0.087848
+       hostile 0.455166        -0.001427      very weak                     1                    0         0.024166
+    determined 0.456658        -0.001448      very weak                     0                    1         0.094542
+    difficulty 0.482807        -0.002867      very weak                     1                    0         0.352338
+        afraid 0.750235        -0.002908      very weak                     0                    1         0.013856
+         alert 0.783733        -0.002983      very weak                     1                    0         0.046359
+participant_ID 0.844482        -0.003102      very weak                     0                    1         0.414269
+     attentive 0.985419        -0.003235      very weak                     1                    0         0.023451
+
+Interpretation guide
+--------------------
+For categorical variables, Cramér's V measures association with clusters.
+For questionnaire variables, epsilon-squared estimates how strongly the variable differs across clusters.
+
+If Phase has very weak association but Cohort or Individual has stronger association, clusters are likely driven by baseline/session/subject effects rather than emotional phases.
+If questionnaire variables show only weak effects, then the clusters have limited emotional interpretability.

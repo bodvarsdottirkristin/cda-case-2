@@ -1,0 +1,89 @@
+Final biosignal cluster report
+===============================
+
+Experiment folder: advanced/outputs/new/conv_ae_4_cohort_participant_norm
+
+Generated figures
+-----------------
+top2_cluster_phase_subplot.png
+contingency_Phase.png
+contingency_Cohort.png
+contingency_Round.png
+contingency_Puzzler.png
+
+Categorical association tests
+-------------------------------
+variable       ari      nmi  chi_square_p_value  cramers_v  n_samples_used
+   Round  0.030198 0.035278            0.000045   0.270174             312
+   Phase  0.000188 0.003780            0.350262   0.082005             312
+  Cohort -0.002353 0.001032            0.979633   0.049291             312
+ Puzzler -0.002743 0.000280            0.817724   0.013048             312
+
+Contingency tables
+------------------
+Phase x Cluster
+Cluster   0   1
+Phase          
+phase1   48  56
+phase2   38  66
+phase3   41  63
+
+Cohort x Cluster
+Cluster   0   1
+Cohort         
+D1_1     37  59
+D1_2     29  43
+D1_3     20  28
+D1_4     21  27
+D1_5      9  15
+D1_6     11  13
+
+Round x Cluster
+Cluster   0   1
+Round          
+round_1  49  29
+round_2  26  52
+round_3  22  56
+round_4  30  48
+
+Puzzler x Cluster
+Cluster   0   1
+Puzzler        
+0        62  94
+1        65  91
+
+Top discriminating features
+---------------------------
+Feature source: biosignal_features_from_processed_windows
+
+ cluster_vs_rest     feature  mean_difference      p_value  cohens_d
+               0   TEMP_mean        -1.648486 8.814000e-51 -3.294687
+               1   TEMP_mean         1.648486 8.814000e-51  3.294687
+               1 TEMP_median         1.657953 1.047313e-50  3.290077
+               0 TEMP_median        -1.657953 1.047313e-50 -3.290077
+               1    TEMP_max         1.532576 3.796381e-44  2.642153
+               0    TEMP_max        -1.532576 3.796381e-44 -2.642153
+               1    TEMP_min         1.737322 8.801401e-47  2.629105
+               0    TEMP_min        -1.737322 8.801401e-47 -2.629105
+               1    TEMP_std        -0.046740 7.622095e-02 -0.260287
+               0    TEMP_std         0.046740 7.622095e-02  0.260287
+               0     HR_mean        -0.090614 3.451661e-01 -0.137297
+               1     HR_mean         0.090614 3.451661e-01  0.137297
+               0      HR_min        -0.081342 3.209300e-01 -0.124426
+               1      HR_min         0.081342 3.209300e-01  0.124426
+               0     EDA_std        -0.031138 2.476578e-01 -0.123326
+               1     EDA_std         0.031138 2.476578e-01  0.123326
+               0     EDA_max        -0.151092 1.934623e-01 -0.108269
+               1     EDA_max         0.151092 1.934623e-01  0.108269
+               1   HR_median         0.058171 5.867591e-01  0.085840
+               0   HR_median        -0.058171 5.867591e-01 -0.085840
+
+Interpretation guide
+--------------------
+ARI/NMI evaluate how similar cluster labels are to known metadata labels.
+Chi-square p-values test whether cluster membership is associated with a categorical variable.
+Cramer's V measures association strength: near 0 = weak, around 0.3 = moderate, 0.5+ = strong.
+Mann-Whitney U tests whether feature values differ between a cluster and the remaining clusters.
+Cohen's d measures the size of that difference. Larger absolute values indicate stronger discriminating features.
+If --processed-file was provided, discriminating features are biosignal summaries such as HR_mean or EDA_std.
+Otherwise, discriminating features are latent/PCA dimensions.

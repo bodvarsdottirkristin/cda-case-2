@@ -166,8 +166,7 @@ def build_normalized_autoencoder_file(
         # Backward-compatible options, but less recommended.
         # Individual is the folder-level ID, not the real participant identifier.
         "individual": ["Individual"],
-        "individual_round": ["Individual", "Round"],
-        "cohort_individual": ["Cohort", "Individual"],
+        "cohort_participant": ["Cohort", "participant_ID"],
         "cohort_individual_round": ["Cohort", "Individual", "Round"],
     }
 
@@ -292,8 +291,7 @@ def parse_args() -> argparse.Namespace:
             "cohort",
             "cohort_round",
             "individual",
-            "individual_round",
-            "cohort_individual",
+            "cohort_participant",
             "cohort_individual_round",
         ],
         default="participant",

@@ -83,14 +83,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
     "--normalization",
     choices=[
-        "individual",
         "cohort",
-        "cohort_individual",
-        "individual_round",
-        "cohort_individual_round",
-        "cohort_round",
+        "participant",
+        "cohort_participant",
+        "participant_round",
     ],
-    default="cohort",
+    default="participant",
     help="Which normalized processed-data file to use.",
     )
 

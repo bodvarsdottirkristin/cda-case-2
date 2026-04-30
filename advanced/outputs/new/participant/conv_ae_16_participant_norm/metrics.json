@@ -1,0 +1,33 @@
+{
+  "model": "Conv1DAutoencoder",
+  "signals": [
+    "HR",
+    "EDA",
+    "TEMP"
+  ],
+  "latent_dim": 16,
+  "window_size": 60,
+  "step_size": 30,
+  "epochs": 30,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 2,
+  "best_silhouette": 0.3762567937374115,
+  "final_training_loss": 0.007662373859389329,
+  "embedding_method": "none",
+  "processed_file": "/Users/alessandra/Desktop/DTU/second_semester/CDA/cda-case-2/data/processed/autoencoder/autoencoder_windows_participant_norm.npz",
+  "output_dir": "advanced/outputs/new/conv_ae_16_participant_norm",
+  "note": "K-Means was fitted on phase-level latent vectors, not on PCA/t-SNE.",
+  "evaluation": {
+    "Phase_ari": -0.004039897160479516,
+    "Phase_nmi": 0.00018553442156075942,
+    "Puzzler_ari": -0.0025401770542111215,
+    "Puzzler_nmi": 0.0004795588365552629,
+    "Cohort_ari": 0.17361778718821383,
+    "Cohort_nmi": 0.18960056000648604,
+    "Round_ari": 0.0008869773008915787,
+    "Round_nmi": 0.005516761026704129
+  }
+}
