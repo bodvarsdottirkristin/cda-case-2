@@ -56,6 +56,10 @@ def get_questionnaire_columns(df: pd.DataFrame) -> list[str]:
         "WindowEndIndex",
         "WindowStartTime",
         "WindowEndTime",
+        "Puzzler",
+        "puzzler",
+        "parent",
+        "Parent",
     }
 
     numeric_cols = df.select_dtypes(include="number").columns

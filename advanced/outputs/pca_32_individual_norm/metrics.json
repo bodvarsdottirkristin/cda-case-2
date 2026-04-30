@@ -1,0 +1,27 @@
+{
+  "model": "PCA",
+  "n_components": 32,
+  "representation": "flattened 60-second HR/EDA/TEMP windows",
+  "aggregation": "mean PCA scores per Cohort/Individual/Round/Phase",
+  "processed_file": "data/processed/autoencoder/autoencoder_windows_individual_norm.npz",
+  "output_dir": "advanced/outputs/pca_32_individual_norm",
+  "standardize_flattened_features": false,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 2,
+  "best_silhouette": 0.42100173234939575,
+  "cumulative_explained_variance": 0.9997225403785706,
+  "note": "K-Means was fitted on phase-level PCA scores.",
+  "evaluation": {
+    "Phase_ari": -0.0038419588411455073,
+    "Phase_nmi": 0.00014756575892203646,
+    "Puzzler_ari": 0.01030076909864692,
+    "Puzzler_nmi": 0.01037438028304437,
+    "Cohort_ari": 0.24732902631300427,
+    "Cohort_nmi": 0.37900475577574844,
+    "Round_ari": -0.0030203747312378417,
+    "Round_nmi": 0.0015195919540989282,
+    "Individual_ari": 0.0017432856844980045,
+    "Individual_nmi": 0.00884392233725601
+  }
+}

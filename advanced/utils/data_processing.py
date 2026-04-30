@@ -8,9 +8,11 @@ It does:
 2. Load HR, EDA, and TEMP files for every cohort/individual/round/phase.
 3. Resample each signal to 1 Hz.
 4. Attach questionnaire values as phase-level metadata.
-5. Create overlapping windows.
-6. Standardize each signal channel globally.
-7. Convert windows to Conv1D format when requested.
+5. Standardize inconsistent role columns:
+       puzzler / Puzzler / parent / Parent -> Puzzler
+6. Create overlapping windows.
+7. Standardize each signal channel globally.
+8. Convert windows to Conv1D format when requested.
 
 It does NOT:
 - define neural network models,
@@ -36,12 +38,27 @@ from sklearn.preprocessing import StandardScaler
 SIGNALS: tuple[str, ...] = ("HR", "EDA", "TEMP")
 META_KEYS: tuple[str, ...] = ("Cohort", "Individual", "Round", "Phase")
 
+# These columns are metadata/role columns, not questionnaire/emotion scores.
+# Important: in some response.csv files the role variable appears as "puzzler",
+# while in others it appears as "parent". We merge both into a single column:
+# "Puzzler".
 RESPONSE_META_COLS: tuple[str, ...] = (
     "particpant_ID",  # typo appears in some files
     "participant_ID",
     "puzzler",
+    "Puzzler",
+    "parent",
+    "Parent",
     "team_ID",
     "E4_nr",
+)
+
+
+PUZZLER_ROLE_COLUMNS: tuple[str, ...] = (
+    "puzzler",
+    "Puzzler",
+    "parent",
+    "Parent",
 )
 
 
@@ -60,11 +77,44 @@ def infer_project_root() -> Path:
         if (parent / "data").exists() and (parent / "advanced").exists():
             return parent
 
-    # Fallback for unusual execution contexts.
     if len(here.parents) >= 3:
         return here.parents[2]
 
     return Path.cwd()
+
+
+def _get_first_existing_column(
+    df: pd.DataFrame,
+    possible_names: Sequence[str],
+) -> str | None:
+    """
+    Return the first matching column name, ignoring capitalization.
+
+    Example:
+        possible_names = ("puzzler", "Puzzler", "parent", "Parent")
+
+    If the dataframe contains "Parent", this returns "Parent".
+    """
+    lower_to_original = {col.lower(): col for col in df.columns}
+
+    for name in possible_names:
+        if name.lower() in lower_to_original:
+            return lower_to_original[name.lower()]
+
+    return None
+
+
+def _read_response_csv(response_csv: Path) -> pd.DataFrame:
+    """
+    Read response.csv robustly.
+
+    Some files contain an unnamed index column, so we first try index_col=0,
+    then fall back to a normal read.
+    """
+    try:
+        return pd.read_csv(response_csv, index_col=0)
+    except Exception:
+        return pd.read_csv(response_csv)
 
 
 def _read_signal_csv(csv_path: Path, signal: str) -> pd.DataFrame:
@@ -134,7 +184,8 @@ def load_phase(
     -------
     pd.DataFrame
         One row per resampled timestamp, including signal columns, metadata,
-        and questionnaire columns when available.
+        one standardized role column called Puzzler, and questionnaire columns
+        when available.
     """
     dfs: dict[str, pd.Series] = {}
 
@@ -155,7 +206,6 @@ def load_phase(
 
     merged = pd.concat(resampled, axis=1)
 
-    # Ensure all expected signal columns exist.
     for signal in signals:
         if signal not in merged.columns:
             merged[signal] = np.nan
@@ -172,22 +222,46 @@ def load_phase(
     response_csv = phase_dir / "response.csv"
 
     if response_csv.exists():
-        try:
-            resp = pd.read_csv(response_csv, index_col=0)
-        except Exception:
-            resp = pd.read_csv(response_csv)
+        resp = _read_response_csv(response_csv)
 
         if len(resp) > 0:
+            # ---------------------------------------------------------
+            # Standardize the role variable.
+            #
+            # Some response.csv files use "puzzler", others use "parent".
+            # In this project, these refer to the same role information.
+            # We merge them into one clean column: "Puzzler".
+            # ---------------------------------------------------------
+            puzzler_col = _get_first_existing_column(
+                resp,
+                PUZZLER_ROLE_COLUMNS,
+            )
+
+            if puzzler_col is not None:
+                merged["Puzzler"] = resp[puzzler_col].iloc[0]
+            else:
+                merged["Puzzler"] = np.nan
+
+            # ---------------------------------------------------------
+            # Add questionnaire/emotion variables.
+            #
+            # Exclude all metadata/role columns, including parent, because
+            # parent has already been merged into Puzzler.
+            # ---------------------------------------------------------
+            response_meta_cols_lower = {
+                col.lower() for col in RESPONSE_META_COLS
+            }
+
             questionnaire_cols = [
-                col for col in resp.columns if col not in RESPONSE_META_COLS
+                col
+                for col in resp.columns
+                if col.lower() not in response_meta_cols_lower
             ]
 
             for col in questionnaire_cols:
                 merged[col] = resp[col].iloc[0]
-
-            merged["Puzzler"] = (
-                resp["puzzler"].iloc[0] if "puzzler" in resp.columns else np.nan
-            )
+    else:
+        merged["Puzzler"] = np.nan
 
     return merged
 
@@ -331,9 +405,6 @@ def create_windows(
 
         signal_values = grp[list(signal_cols)].to_numpy(dtype=np.float32)
 
-        # Original behavior:
-        # remove rows where all signals are NaN,
-        # then skip candidate windows that still contain any NaN.
         valid_row_mask = ~np.all(np.isnan(signal_values), axis=1)
         signal_values = signal_values[valid_row_mask]
         grp_valid = grp.loc[valid_row_mask].reset_index(drop=True)
@@ -465,9 +536,6 @@ def build_autoencoder_input(
     return X_raw, X_scaled, window_meta, full_resampled_df, scaler
 
 
-# ---------------------------------------------------------------------
-# Optional command-line usage
-# ---------------------------------------------------------------------
 def parse_args() -> argparse.Namespace:
     """
     Optional CLI for checking preprocessing only.
@@ -527,6 +595,17 @@ def main() -> None:
         f"{X_raw.shape[1]} seconds x {X_raw.shape[2]} signals"
     )
     print(f"Metadata rows: {len(window_meta):,}")
+
+    if "Puzzler" in window_meta.columns:
+        print("Puzzler values:")
+        print(window_meta["Puzzler"].value_counts(dropna=False))
+
+    if "parent" in window_meta.columns:
+        print(
+            "Warning: column 'parent' is still present in window metadata. "
+            "It should normally be merged into 'Puzzler'."
+        )
+
     print("No files were saved. v1_autoencoding.py handles the processed-data cache.")
 
 

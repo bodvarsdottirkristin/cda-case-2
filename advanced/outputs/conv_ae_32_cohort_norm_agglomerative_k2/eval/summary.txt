@@ -15,7 +15,6 @@ Phase-level samples: 312
 Clusters: 2
 Phase values: 3
 Puzzler values: 2
-parent values: 2
 Cohort values: 6
 Round values: 4
 Individual values: 8
@@ -24,8 +23,7 @@ Alignment metrics
 -----------------
   variable       ari      nmi  n_unique_values  n_samples_used
      Phase -0.002135 0.001081                3             312
-   Puzzler -0.002769 0.000807                2             216
-    parent  0.020492 0.032512                2              96
+   Puzzler  0.002587 0.005356                2             312
     Cohort -0.004563 0.011523                6             312
      Round  0.000958 0.006778                4             312
 Individual  0.015517 0.085204                8             312
@@ -47,17 +45,10 @@ phase3   77  27
 
 Puzzler x Cluster
 -----------------
-Cluster   0   1
-Puzzler        
-0.0      79  29
-1.0      82  26
-
-parent x Cluster
-----------------
-Cluster   0   1
-parent         
-0.0      33  15
-1.0      41   7
+Cluster    0   1
+Puzzler         
+0        112  44
+1        123  33
 
 Cohort x Cluster
 ----------------
