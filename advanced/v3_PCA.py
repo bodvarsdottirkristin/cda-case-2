@@ -7,12 +7,12 @@ but replaces the neural encoder with PCA.
 Pipeline:
 
     data/processed/autoencoder/autoencoder_windows.npz
-    → flatten each 60 x 3 window
-    → PCA
-    → average PCA scores per phase
-    → K-Means clustering
-    → save results
-    → evaluate with evaluate_clusters.py
+    -> flatten each 60 x 3 window
+    -> PCA
+    -> average PCA scores per phase
+    -> K-Means clustering
+    -> save results
+    -> evaluate with evaluate_clusters.py
 
 Example:
 
@@ -198,7 +198,7 @@ def save_outputs(
         "model": "PCA",
         "n_components": int(args.n_components),
         "representation": "flattened 60-second HR/EDA/TEMP windows",
-        "aggregation": "mean PCA scores per Cohort/Individual/Round/Phase",
+        "aggregation": "mean PCA scores per Cohort/participant_ID/Round/Phase",
         "processed_file": str(args.processed_file),
         "output_dir": str(args.output_dir),
         "standardize_flattened_features": bool(args.standardize_flattened_features),
@@ -280,6 +280,12 @@ def main() -> None:
     print(f"Loading processed data from: {args.processed_file}")
 
     X_scaled, window_meta = load_processed_autoencoder_file(args.processed_file)
+
+    if "participant_ID" not in window_meta.columns:
+        raise ValueError(
+            "Expected column 'participant_ID' in window metadata, but it was not found. "
+            f"Available columns: {list(window_meta.columns)}"
+        )
 
     print(
         f"Loaded windows: {X_scaled.shape[0]} windows x "

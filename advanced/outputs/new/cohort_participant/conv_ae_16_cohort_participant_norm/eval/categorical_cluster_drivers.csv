@@ -1,5 +1,0 @@
-variable,test,chi2,dof,p_value,cramers_v,n_unique_values,n_samples_used,interpretation
-Round,chi_square,12.22592791823561,3,0.006647970370424795,0.19795369762800927,4,312,moderate
-Phase,chi_square,1.6525013448090373,2,0.4376872466498646,0.0727769102755794,3,312,weak
-Cohort,chi_square,0.34965034965034963,5,0.99660370928775,0.03347647229917266,6,312,very weak
-Puzzler,chi_square,0.0,1,1.0,0.0,2,312,very weak

@@ -120,13 +120,18 @@ def plot_contingency_table(
     table: pd.DataFrame,
     var: str,
     out_path: Path,
+    cmap: str = "YlGnBu",
 ) -> None:
     """
-    Save a contingency table as a heatmap figure.
+    Save a contingency table as a lighter heatmap figure.
     """
     fig, ax = plt.subplots(figsize=(8, max(4, 0.45 * len(table))))
 
-    im = ax.imshow(table.values, aspect="auto", cmap='viridis')
+    im = ax.imshow(
+        table.values,
+        aspect="auto",
+        cmap=cmap,
+    )
 
     ax.set_xticks(np.arange(table.shape[1]))
     ax.set_yticks(np.arange(table.shape[0]))
@@ -146,13 +151,13 @@ def plot_contingency_table(
                 str(table.iloc[i, j]),
                 ha="center",
                 va="center",
+                color="black",
             )
 
     plt.colorbar(im, ax=ax, label="Count")
     plt.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
-
 
 def draw_empirical_ellipses(
     ax,

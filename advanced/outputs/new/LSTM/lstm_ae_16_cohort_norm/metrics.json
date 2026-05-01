@@ -1,0 +1,18 @@
+{
+  "model": "LSTMAutoencoder",
+  "processed_file": "data/processed/autoencoder/autoencoder_windows_cohort_norm.npz",
+  "output_dir": "advanced/outputs/new/LSTM/lstm_ae_16_cohort_norm",
+  "latent_dim": 16,
+  "hidden_dim": 64,
+  "num_layers": 1,
+  "dropout": 0.0,
+  "epochs": 30,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 2,
+  "best_silhouette": 0.30071163177490234,
+  "final_training_loss": 0.041885921708595605,
+  "note": "K-Means was fitted on phase-level LSTM autoencoder latents."
+}

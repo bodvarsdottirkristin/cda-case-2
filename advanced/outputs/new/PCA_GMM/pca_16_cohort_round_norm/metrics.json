@@ -1,0 +1,17 @@
+{
+  "model": "GMM",
+  "input_representation_dir": "advanced/outputs/new/PCA/pca_16_cohort_round_norm",
+  "clustering_method": "GaussianMixture",
+  "covariance_type": "full",
+  "standardize_features": false,
+  "selection_metric": "bic",
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 2,
+  "best_silhouette": 0.09375597536563873,
+  "best_bic": -2465.347994087737,
+  "best_aic": -3606.963966369629,
+  "n_samples": 312,
+  "n_features": 16,
+  "note": "GMM was fitted on an existing phase-level representation. The number of components was selected using the chosen selection_metric. Evaluation should be run with evaluate_clusters.py."
+}

@@ -87,6 +87,7 @@ def parse_args() -> argparse.Namespace:
         "participant",
         "cohort_participant",
         "participant_round",
+        "cohort_round"
     ],
     default="participant",
     help="Which normalized processed-data file to use.",
