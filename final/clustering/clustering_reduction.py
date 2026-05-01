@@ -18,10 +18,6 @@ import warnings
 warnings.filterwarnings('ignore')
 sns.set_theme(style="whitegrid")
 
-# ==========================================
-# 1. SUPPORT & STATS FUNCTIONS
-# ==========================================
-
 def cohens_d(x, y):
     nx, ny = len(x), len(y)
     dof = nx + ny - 2
@@ -53,7 +49,6 @@ def save_combined_cluster_plots(df, coords, models_dict, phase_col, save_path, x
 
     for i, (model_name, cluster_col) in enumerate(models_dict.items()):
         labels = df[cluster_col].values
-        
         ax_cluster = axes[i, 0] if n_models > 1 else axes[0]
         sns.scatterplot(x=dim1, y=dim2, hue=labels, palette='viridis', ax=ax_cluster, s=50, alpha=0.7)
         draw_empirical_ellipses(ax_cluster, coords, labels, palette='viridis')
@@ -85,15 +80,11 @@ def evaluate_optimal_k_and_save(X_scaled, title, save_path, max_k=5):
 
     axes[0].plot(k_range, bics, marker='o', color='purple')
     axes[0].set_title('GMM: BIC Score (Lower is better)')
-    axes[0].set_xlabel('Number of Clusters (K)')
-    axes[0].set_ylabel('BIC')
     axes[0].set_xticks(k_range)
 
     axes[1].plot(k_range, sil_kmeans, marker='o', label='K-Means')
     axes[1].plot(k_range, sil_kmedoids, marker='s', label='K-Medoids')
     axes[1].set_title('Silhouette Score (Higher is better)')
-    axes[1].set_xlabel('Number of Clusters (K)')
-    axes[1].set_ylabel('Silhouette Score')
     axes[1].set_xticks(k_range)
     axes[1].legend()
 
@@ -107,15 +98,14 @@ def evaluate_optimal_k_and_save(X_scaled, title, save_path, max_k=5):
         'K-Medoids': k_range[np.argmax(sil_kmedoids)]
     }
 
-# ==========================================
-# 2. MAIN PIPELINE (MARKDOWN REPORT)
-# ==========================================
-
-def run_analysis_pipeline(df, file_name, out_dir):
-    if 'phase' in df.columns:
-        df.rename(columns={'phase': 'Phase'}, inplace=True)
+def run_analysis_pipeline(df_reduced, df_orig, file_name, out_dir):
+    if 'phase' in df_reduced.columns:
+        df_reduced.rename(columns={'phase': 'Phase'}, inplace=True)
+    if 'phase' in df_orig.columns:
+        df_orig.rename(columns={'phase': 'Phase'}, inplace=True)
         
     metadata_cols = ['original ID', 'raw_data Path', 'Team ID', 'Individual', 'Phase', 'Cohort', 'Round', 'Role', 'Puzzler']
+    QUEST_COLS = ['Frustrated', 'upset', 'hostile', 'alert', 'ashamed', 'inspired', 'nervous', 'attentive', 'afraid', 'active', 'determined']
     
     bio_out_dir = out_dir / 'biosignals'
     quest_out_dir = out_dir / 'questionnaires'
@@ -125,12 +115,15 @@ def run_analysis_pipeline(df, file_name, out_dir):
     # ---------------------------------------------------------
     # PART A: BIOSIGNALS
     # ---------------------------------------------------------
-    num_cols = df.select_dtypes(include=[np.number]).columns
-    bio_features = [c for c in num_cols if c not in metadata_cols]
+    reduced_num_cols = df_reduced.select_dtypes(include=[np.number]).columns
+    reduced_features = [c for c in reduced_num_cols if c not in metadata_cols and c not in QUEST_COLS]
     
-    if len(bio_features) >= 2:
-        dim1_col, dim2_col = bio_features[0], bio_features[1]
-        X_bio = df[[dim1_col, dim2_col]].fillna(df[[dim1_col, dim2_col]].median())
+    orig_num_cols = df_orig.select_dtypes(include=[np.number]).columns
+    orig_bio_features = [c for c in orig_num_cols if c not in metadata_cols and c not in QUEST_COLS]
+    
+    if len(reduced_features) >= 2:
+        dim1_col, dim2_col = reduced_features[0], reduced_features[1]
+        X_bio = df_reduced[[dim1_col, dim2_col]].fillna(df_reduced[[dim1_col, dim2_col]].median())
         X_bio_scaled = StandardScaler().fit_transform(X_bio)
         
         best_ks_bio = evaluate_optimal_k_and_save(X_bio_scaled, "Biosignals", bio_out_dir / "1_optimal_k.png", max_k=5)
@@ -148,17 +141,21 @@ def run_analysis_pipeline(df, file_name, out_dir):
             
             for model_name, model in models_bio.items():
                 cluster_col = f"{model_name}_Bio_Cluster"
-                df[cluster_col] = model.fit_predict(X_bio_scaled)
+                
+                # Fit on reduced space
+                labels = model.fit_predict(X_bio_scaled)
+                df_reduced[cluster_col] = labels
+                df_orig[cluster_col] = labels
                 models_cols_bio[model_name] = cluster_col
                 
                 md_file.write(f"## Model: {model_name} (K={best_ks_bio[model_name]})\n\n")
                 md_file.write("### Contingency Tables & Metrics\n")
                 
                 for meta_col in ['Phase', 'Cohort', 'Round', 'Role']:
-                    if meta_col in df.columns:
-                        ct = pd.crosstab(df[cluster_col], df[meta_col])
-                        ari = adjusted_rand_score(df[meta_col].astype(str), df[cluster_col])
-                        nmi = normalized_mutual_info_score(df[meta_col].astype(str), df[cluster_col])
+                    if meta_col in df_reduced.columns:
+                        ct = pd.crosstab(df_reduced[cluster_col], df_reduced[meta_col])
+                        ari = adjusted_rand_score(df_reduced[meta_col].astype(str), df_reduced[cluster_col])
+                        nmi = normalized_mutual_info_score(df_reduced[meta_col].astype(str), df_reduced[cluster_col])
                         chi2, p, _, _ = chi2_contingency(ct)
                         cramer_v = np.sqrt(chi2 / (ct.sum().sum() * (min(ct.shape) - 1))) if min(ct.shape) > 1 else 0
                         
@@ -166,14 +163,23 @@ def run_analysis_pipeline(df, file_name, out_dir):
                         md_file.write(f"- ARI: `{ari:.4f}` | NMI: `{nmi:.4f}` | p-value: `{p:.4e}` | Cramer's V: `{cramer_v:.4f}`\n\n")
                         md_file.write(ct.to_markdown() + "\n\n")
                 
-                md_file.write("### Top 5 Discriminating Features (Mann-Whitney U)\n")
+                md_file.write("### Top 5 Discriminating Original Features (Mann-Whitney U)\n")
                 mw_results = []
                 for c in range(best_ks_bio[model_name]):
-                    c_data, rest_data = df[df[cluster_col] == c], df[df[cluster_col] != c]
-                    for f in bio_features:
+                    # Evaluate on Original Features mapping from reduced labels
+                    c_data = df_orig[df_orig[cluster_col] == c]
+                    rest_data = df_orig[df_orig[cluster_col] != c]
+                    
+                    for f in orig_bio_features:
                         if c_data[f].isna().all() or rest_data[f].isna().all(): continue
-                        stat, p = mannwhitneyu(c_data[f].dropna(), rest_data[f].dropna(), alternative='two-sided')
-                        d = cohens_d(c_data[f].dropna(), rest_data[f].dropna())
+                        
+                        c_vals = c_data[f].dropna()
+                        r_vals = rest_data[f].dropna()
+                        
+                        if len(c_vals) == 0 or len(r_vals) == 0: continue
+                            
+                        stat, p = mannwhitneyu(c_vals, r_vals, alternative='two-sided')
+                        d = cohens_d(c_vals, r_vals)
                         mw_results.append({'Cluster': c, 'Feature': f, 'p-val': p, 'Cohens_d': abs(d)})
                 
                 if mw_results:
@@ -181,16 +187,15 @@ def run_analysis_pipeline(df, file_name, out_dir):
                     top_feats = mw_df.groupby('Cluster').head(5)
                     md_file.write(top_feats.to_markdown(index=False) + "\n\n")
                     
-        save_combined_cluster_plots(df, X_bio_scaled, models_cols_bio, 'Phase', bio_out_dir / "3_visualizations_combined.png", dim1_col, dim2_col)
+        save_combined_cluster_plots(df_reduced, X_bio_scaled, models_cols_bio, 'Phase', bio_out_dir / "3_visualizations_combined.png", dim1_col, dim2_col)
 
     # ---------------------------------------------------------
     # PART B: QUESTIONNAIRES
     # ---------------------------------------------------------
-    QUEST_COLS = ['Frustrated', 'upset', 'hostile', 'alert', 'ashamed', 'inspired', 'nervous', 'attentive', 'afraid', 'active', 'determined']
-    available_quest = [c for c in QUEST_COLS if c in df.columns]
+    available_quest = [c for c in QUEST_COLS if c in df_orig.columns]
     
     if available_quest:
-        X_quest = df[available_quest].fillna(df[available_quest].median())
+        X_quest = df_orig[available_quest].fillna(df_orig[available_quest].median())
         X_quest_scaled = StandardScaler().fit_transform(X_quest)
         pca_coords = PCA(n_components=2, random_state=42).fit_transform(X_quest_scaled)
         
@@ -211,17 +216,19 @@ def run_analysis_pipeline(df, file_name, out_dir):
             
             for i, (model_name, model) in enumerate(models_quest.items()):
                 cluster_col = f"{model_name}_Quest_Cluster"
-                df[cluster_col] = model.fit_predict(X_quest_scaled)
+                labels = model.fit_predict(X_quest_scaled)
+                df_orig[cluster_col] = labels
+                df_reduced[cluster_col] = labels
                 models_cols_quest[model_name] = cluster_col
                 
                 md_file.write(f"## Model: {model_name} (K={best_ks_quest[model_name]})\n\n")
                 md_file.write("### Contingency Tables & Metrics\n")
                 
                 for meta_col in ['Phase', 'Cohort', 'Round', 'Role']:
-                    if meta_col in df.columns:
-                        ct = pd.crosstab(df[cluster_col], df[meta_col])
-                        ari = adjusted_rand_score(df[meta_col].astype(str), df[cluster_col])
-                        nmi = normalized_mutual_info_score(df[meta_col].astype(str), df[cluster_col])
+                    if meta_col in df_orig.columns:
+                        ct = pd.crosstab(df_orig[cluster_col], df_orig[meta_col])
+                        ari = adjusted_rand_score(df_orig[meta_col].astype(str), df_orig[cluster_col])
+                        nmi = normalized_mutual_info_score(df_orig[meta_col].astype(str), df_orig[cluster_col])
                         chi2, p, _, _ = chi2_contingency(ct)
                         cramer_v = np.sqrt(chi2 / (ct.sum().sum() * (min(ct.shape) - 1))) if min(ct.shape) > 1 else 0
                         
@@ -230,7 +237,7 @@ def run_analysis_pipeline(df, file_name, out_dir):
                         md_file.write(ct.to_markdown() + "\n\n")
                 
                 md_file.write("### Mean Cluster Profiles (Z-Scores)\n")
-                cluster_profiles = df.groupby(cluster_col)[available_quest].mean()
+                cluster_profiles = df_orig.groupby(cluster_col)[available_quest].mean()
                 md_file.write(cluster_profiles.to_markdown() + "\n\n")
                 
                 ax_h = axes_heat[i] if len(models_quest) > 1 else axes_heat
@@ -241,15 +248,19 @@ def run_analysis_pipeline(df, file_name, out_dir):
             plt.savefig(quest_out_dir / "4_profiles_heatmap.png", dpi=300)
             plt.close()
             
-        save_combined_cluster_plots(df, pca_coords, models_cols_quest, 'Phase', quest_out_dir / "3_visualizations_combined.png", "PCA 1", "PCA 2")
+        save_combined_cluster_plots(df_orig, pca_coords, models_cols_quest, 'Phase', quest_out_dir / "3_visualizations_combined.png", "PCA 1", "PCA 2")
 
-# ==========================================
-# 3. EXECUTION
-# ==========================================
 
 if __name__ == "__main__":
-    PROJECT_ROOT = Path(os.getcwd()).resolve().parents[1] 
+    PROJECT_ROOT = Path(os.getcwd()).resolve()
     BASE_OUTPUT_DIR = PROJECT_ROOT / 'final' / 'clustering' / 'results' 
+    
+    orig_data_path = PROJECT_ROOT / 'data' / 'processed' / 'HR_data_2.csv'
+    
+    if not orig_data_path.exists():
+        sys.exit(1)
+        
+    df_original = pd.read_csv(orig_data_path)
 
     data_paths = [
         PROJECT_ROOT / 'data' / 'processed' / 'final' / 'HR_data_pca.csv', 
@@ -260,5 +271,7 @@ if __name__ == "__main__":
     for data_file in data_paths:
         if data_file.exists():
             dataset_out_dir = BASE_OUTPUT_DIR / data_file.stem
-            df_current = pd.read_csv(data_file)
-            run_analysis_pipeline(df_current, data_file.name, dataset_out_dir)
+            df_reduced = pd.read_csv(data_file)
+            
+            if len(df_reduced) == len(df_original):
+                run_analysis_pipeline(df_reduced, df_original.copy(), data_file.name, dataset_out_dir)
