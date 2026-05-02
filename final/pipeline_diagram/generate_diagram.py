@@ -105,10 +105,6 @@ def build_graph() -> graphviz.Digraph:
                    label='<<B>Hierarchical</B><BR/>'
                          '<FONT POINT-SIZE="10">Ward linkage</FONT>>',
                    fillcolor=C_CLUSTER)
-            r.node("dbscan",
-                   label='<<B>DBSCAN</B><BR/>'
-                         '<FONT POINT-SIZE="10">grid search &#949;, min_samples</FONT>>',
-                   fillcolor=C_CLUSTER)
             r.node("kmeans",
                    label='<<B>K-Means</B>>',
                    fillcolor=C_CLUSTER)
@@ -120,13 +116,30 @@ def build_graph() -> graphviz.Digraph:
                    label='<<B>GMM</B><BR/>'
                          '<FONT POINT-SIZE="10">full / tied / diag / sph</FONT>>',
                    fillcolor=C_CLUSTER)
+            r.node("dbscan",
+                   label='<<B>DBSCAN</B><BR/>'
+                         '<FONT POINT-SIZE="10">grid search &#949;, min_samples</FONT>>',
+                   fillcolor=C_CLUSTER)
 
-    # ── k-Selection ────────────────────────────────────────────────
-    g.node("kselect",
-           label='<<B>k-Selection</B><BR/>'
-                 '<FONT POINT-SIZE="10">Silhouette score (Hier, K-Means, K-Medoids)</FONT><BR/>'
-                 '<FONT POINT-SIZE="10">BIC (GMM) &#8212; labels never consulted</FONT>>',
-           fillcolor=C_KSELECT)
+        # Force vertical order (reversed chain for LR rankdir): dbscan at bottom
+        cl.edge("dbscan", "gmm",    style="invis")
+        cl.edge("gmm",    "kmed",   style="invis")
+        cl.edge("kmed",   "kmeans", style="invis")
+        cl.edge("kmeans", "hier",   style="invis")
+
+    # ── k-Selection (two separate nodes) ──────────────────────────
+    with g.subgraph() as ks:
+        ks.attr(rank="same")
+        ks.node("kselect_sil",
+                label='<<B>k-Selection</B><BR/>'
+                      '<FONT POINT-SIZE="10">Silhouette score</FONT><BR/>'
+                      '<FONT POINT-SIZE="10">Hierarchical, K-Means, K-Medoids</FONT>>',
+                fillcolor=C_KSELECT)
+        ks.node("kselect_bic",
+                label='<<B>k-Selection</B><BR/>'
+                      '<FONT POINT-SIZE="10">BIC</FONT><BR/>'
+                      '<FONT POINT-SIZE="10">GMM</FONT>>',
+                fillcolor=C_KSELECT)
 
     # ── Cluster Assignments ────────────────────────────────────────
     g.node("assignments",
@@ -182,14 +195,19 @@ def build_graph() -> graphviz.Digraph:
     # Reductions → hub → clustering (3+5 edges instead of 15)
     for rn in ["pca", "spca", "umap"]:
         g.edge(rn, "hub_red", arrowhead="none")
-    for cn in ["hier", "dbscan", "kmeans", "kmed", "gmm"]:
+    for cn in ["hier", "kmeans", "kmed", "gmm", "dbscan"]:
         g.edge("hub_red", cn)
 
-    # Clustering → k-selection
-    for cn in ["hier", "dbscan", "kmeans", "kmed", "gmm"]:
-        g.edge(cn, "kselect")
+    # Clustering → k-selection (Silhouette for centroid/hierarchical, BIC for GMM)
+    for cn in ["hier", "kmeans", "kmed"]:
+        g.edge(cn, "kselect_sil")
+    g.edge("gmm", "kselect_bic")
 
-    g.edge("kselect",     "assignments")
+    # DBSCAN bypasses k-selection → directly to assignments
+    g.edge("dbscan", "assignments", constraint="false")
+
+    g.edge("kselect_sil", "assignments")
+    g.edge("kselect_bic", "assignments")
     g.edge("assignments", "ext_eval")
     g.edge("assignments", "disc")
 

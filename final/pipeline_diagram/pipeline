@@ -27,13 +27,21 @@ digraph cda2_pipeline {
 		{
 			rank=same
 			hier [label=<<B>Hierarchical</B><BR/><FONT POINT-SIZE="10">Ward linkage</FONT>> fillcolor="#ffcdd2"]
-			dbscan [label=<<B>DBSCAN</B><BR/><FONT POINT-SIZE="10">grid search &#949;, min_samples</FONT>> fillcolor="#ffcdd2"]
 			kmeans [label=<<B>K-Means</B>> fillcolor="#ffcdd2"]
 			kmed [label=<<B>K-Medoids</B><BR/><FONT POINT-SIZE="10">PAM</FONT>> fillcolor="#ffcdd2"]
 			gmm [label=<<B>GMM</B><BR/><FONT POINT-SIZE="10">full / tied / diag / sph</FONT>> fillcolor="#ffcdd2"]
+			dbscan [label=<<B>DBSCAN</B><BR/><FONT POINT-SIZE="10">grid search &#949;, min_samples</FONT>> fillcolor="#ffcdd2"]
 		}
+		dbscan -> gmm [style=invis]
+		gmm -> kmed [style=invis]
+		kmed -> kmeans [style=invis]
+		kmeans -> hier [style=invis]
 	}
-	kselect [label=<<B>k-Selection</B><BR/><FONT POINT-SIZE="10">Silhouette score (Hier, K-Means, K-Medoids)</FONT><BR/><FONT POINT-SIZE="10">BIC (GMM) &#8212; labels never consulted</FONT>> fillcolor="#fff9c4"]
+	{
+		rank=same
+		kselect_sil [label=<<B>k-Selection</B><BR/><FONT POINT-SIZE="10">Silhouette score</FONT><BR/><FONT POINT-SIZE="10">Hierarchical, K-Means, K-Medoids</FONT>> fillcolor="#fff9c4"]
+		kselect_bic [label=<<B>k-Selection</B><BR/><FONT POINT-SIZE="10">BIC</FONT><BR/><FONT POINT-SIZE="10">GMM</FONT>> fillcolor="#fff9c4"]
+	}
 	assignments [label=<<B>Cluster Assignments</B><BR/><FONT POINT-SIZE="10">hard labels (K-Means, K-Medoids, Hier, DBSCAN)</FONT><BR/><FONT POINT-SIZE="10">soft probabilities (GMM)</FONT>> fillcolor="#e8e8e8"]
 	ext_eval [label=<<B>External Evaluation</B><BR/><FONT POINT-SIZE="10">ARI, NMI</FONT><BR/><FONT POINT-SIZE="10">vs Phase / Round / Cohort / Role</FONT>> fillcolor="#b2ebf2"]
 	disc [label=<<B>Feature Discriminability</B><BR/><FONT POINT-SIZE="10">Mann-Whitney U + Cohen's d</FONT><BR/><FONT POINT-SIZE="10">on original normalised features</FONT>> fillcolor="#ffe0b2"]
@@ -59,16 +67,17 @@ digraph cda2_pipeline {
 	spca -> hub_red [arrowhead=none]
 	umap -> hub_red [arrowhead=none]
 	hub_red -> hier
-	hub_red -> dbscan
 	hub_red -> kmeans
 	hub_red -> kmed
 	hub_red -> gmm
-	hier -> kselect
-	dbscan -> kselect
-	kmeans -> kselect
-	kmed -> kselect
-	gmm -> kselect
-	kselect -> assignments
+	hub_red -> dbscan
+	hier -> kselect_sil
+	kmeans -> kselect_sil
+	kmed -> kselect_sil
+	gmm -> kselect_bic
+	dbscan -> assignments [constraint=false]
+	kselect_sil -> assignments
+	kselect_bic -> assignments
 	assignments -> ext_eval
 	assignments -> disc
 }
