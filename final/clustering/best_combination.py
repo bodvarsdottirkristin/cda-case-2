@@ -13,7 +13,8 @@ warnings.filterwarnings('ignore')
 
 def evaluate_best_combinations(data_paths, target_col='Phase', max_k=5):
     results = []
-    meta_cols = ['original ID', 'raw_data Path', 'Team ID', 'Individual', 'Phase', 'Cohort', 'Round', 'Role', 'Puzzler']
+    questionnaire_cols = ['Frustrated', 'upset', 'hostile', 'alert', 'ashamed', 'inspired', 'nervous', 'attentive', 'afraid', 'active', 'determined']
+    meta_cols = ['original ID', 'raw_data Path', 'Team ID', 'Individual', 'Phase', 'Cohort', 'Round', 'Role', 'Puzzler'] + questionnaire_cols
 
     for path in data_paths:
         if not path.exists():
