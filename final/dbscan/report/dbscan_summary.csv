@@ -1,0 +1,4 @@
+Reduction,eps,min_samples,n_clusters,n_noise,noise_pct,silhouette,Phase_ARI,Phase_NMI,Cohort_ARI,Cohort_NMI,Round_ARI,Round_NMI,Puzzler_ARI,Puzzler_NMI
+PCA,3.0,5,2,168,53.8,0.1064,-0.0054,0.0286,0.0031,0.0121,0.0043,0.036,-0.0011,0.0015
+SparsePCA,2.0,3,2,306,98.1,0.3575,0.1176,0.4399,0.0625,0.4569,-0.0606,0.3874,0.3243,0.4787
+UMAP,0.5,3,4,298,95.5,0.8999,0.1027,0.2356,0.0136,0.4147,-0.0251,0.322,-0.0677,0.087

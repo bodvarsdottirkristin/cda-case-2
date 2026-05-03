@@ -70,6 +70,9 @@ Place the raw EmoPairCompete data in `data/raw/` following the original dataset 
 All scripts are run from the repository root.
 
 ```bash
+# DBSCAN — grid search across all three reductions
+python final/dbscan/dbscan_biosignals.py
+
 # K-Means, K-Medoids, GMM — corrected leaderboard
 python final/clustering/best_combination.py
 
