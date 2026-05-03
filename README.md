@@ -1,101 +1,112 @@
-# Creators:
-Kristín Böðvarsdóttir
+# CDA Case 2 — EmoPairCompete Clustering Analysis
 
-Alessandra  Carrara
-
-Kyle Nathan Yahya
-
-NAME4
-
-NAME5
-
-# EmoPairCompete Physiological Data Analysis
-
-## Overview
-This project analyses the **EmoPairCompete** dataset — physiological biosignals (EDA, HR, TEMP, BVP) collected from participants wearing **Empatica E4** wristbands during a stress-inducing tangram-puzzle competition.
+**Team:** Kristín Böðvarsdóttir, Alessandra Carrara, Kyle Nathan Yahya, NAME4, NAME5, NAME6
 
 ---
 
-## Dataset Description
-Data are organised in a nested directory hierarchy:
+## Overview
 
-```
-data/raw/
-└── <cohort>/          # D11, D12, D13–D16
-    └── <participant>/ # e.g. P01, P02 …
-        └── <round>/   # 1, 2, 3, 4
-            └── <phase>/  # pre, puzzle, post
-                ├── BVP.csv
-                └── EDA.csv
-                └── HR.csv
-                └── response.csv
-                └── TEMP.csv
-```
+This project analyses the **EmoPairCompete** dataset — physiological biosignals (EDA, HR, TEMP) collected from participants wearing Empatica E4 wristbands during a competitive puzzle game. The goal is to discover latent physiological arousal states through unsupervised clustering and assess whether they align with known experimental conditions (game phase, cohort, role).
 
-## Project Structure
+The project is split into two parts:
+- **Main analysis** — clustering on statistical summaries (`final/`)
+- **Advanced topic** — clustering on raw time-series via autoencoders (`advanced/`)
+
+---
+
+## Repository Structure
+
+The repository contains both exploratory development work and the final clean pipeline.
+**The submission code lives in `final/` and `advanced/`.**
+All other top-level folders (`clustering/`, `dim_reduction/`, `gmm/`) are exploratory and not part of the submission.
+
 ```
 cda-case-2/
+├── final/                        ← MAIN ANALYSIS
+│   ├── clustering/
+│   │   ├── best_combination.py   ← K-Means, K-Medoids, GMM leaderboard
+│   │   └── clustering_reduction.py
+│   ├── dendrogram/
+│   │   └── dendrogram_biosignals.py  ← Hierarchical clustering
+│   ├── gmm/
+│   │   └── gmm_biosignals.py     ← GMM full analysis
+│   ├── pipeline_diagram/
+│   │   └── generate_diagram.py   ← Figure 1
+│   ├── cluster_profiles.py       ← Cluster z-score summary (SparsePCA GMM)
+│   └── full_leaderboard.py       ← All 15 combinations + signal rankings
+│
+├── advanced/                     ← ADVANCED TOPIC
+│   ├── v1_autoencoding.py        ← Conv1D AE (global normalisation)
+│   ├── v2_autoencoding.py        ← Conv1D AE (cohort normalisation)
+│   ├── autoencoding_lstm.py      ← LSTM AE
+│   ├── utils/                    ← Shared model and data loading code
+│   └── outputs/                  ← Experiment results (ARI/NMI summaries)
+│
 ├── data/
-│   ├── raw/           # original CSVs (not committed to git)
-│   └── processed/     # cleaned & merged outputs
-├── notebooks/
-│   ├── 01_eda.ipynb
-│   ├── 02_feature_analysis.ipynb
-│   └── 03_modelling.ipynb
-├── src/
-│   ├── __init__.py
-│   ├── preprocessing.py
-│   ├── features.py
-│   └── model.py
-├── tests/
-│   ├── __init__.py
-│   ├── test_preprocessing.py
-│   ├── test_features.py
-│   └── test_model.py
-├── results/
-│   ├── figures/
-│   └── tables/
-├── .gitignore
-├── README.md
-└── requirements.txt
+│   ├── raw/                      ← Original CSVs (not committed)
+│   └── processed/                ← HR_data_2.csv and reduced representations
+│
+├── docs/                         ← Report versions
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
 ## Setup
 
-### 1. Clone the repository
 ```bash
 git clone https://github.com/bodvarsdottirkristin/cda-case-2.git
 cd cda-case-2
-```
-
-### 2. Create and activate a virtual environment
-```bash
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-```
-
-### 3. Install dependencies
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Place the raw data
-Copy the EmoPairCompete CSV files into `data/raw/` following the directory structure shown above.
+Place the raw EmoPairCompete data in `data/raw/` following the original dataset structure.
 
 ---
 
-## Running the Tests
+## Running the Main Analysis
+
+All scripts are run from the repository root.
+
 ```bash
-pytest tests/
+# K-Means, K-Medoids, GMM — corrected leaderboard
+python final/clustering/best_combination.py
+
+# Hierarchical clustering (Ward linkage)
+python final/dendrogram/dendrogram_biosignals.py
+
+# GMM — full BIC grid search across covariance types
+python final/gmm/gmm_biosignals.py
+
+# All 15 combinations leaderboard with signal-type rankings
+python final/full_leaderboard.py
+
+# Cluster z-score profiles (SparsePCA GMM k=3)
+python final/cluster_profiles.py
+
+# Pipeline diagram (requires graphviz system package)
+python final/pipeline_diagram/generate_diagram.py
 ```
 
 ---
 
-## Notebooks
-| Notebook | Purpose |
-|----------|---------|
-| `01_eda.ipynb` | Exploratory data analysis — distributions, correlations |
-| `02_feature_analysis.ipynb` | Feature importance, dimensionality reduction |
-| `03_modelling.ipynb` | Predictive models for stress classification |
+## Running the Advanced Analysis
+
+```bash
+# Conv1D autoencoder with cohort normalisation (main advanced result)
+python advanced/v2_autoencoding.py
+
+# LSTM autoencoder
+python advanced/autoencoding_lstm.py
+```
+
+Results are saved to `advanced/outputs/`. Each output directory contains a
+`eval/summary.txt` with full ARI/NMI alignment metrics.
+
+---
+
+## Dependencies
+
+See `requirements.txt`. Key packages: `scikit-learn`, `scikit-learn-extra`
+(K-Medoids), `umap-learn`, `graphviz`, `torch` (autoencoders).
