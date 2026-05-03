@@ -142,11 +142,9 @@ def main():
     plt.xlabel("Biological Cluster (GMM on PCA)")
     
     plt.tight_layout()
-    plt.savefig(FIGURES_DIR / 'final_triangulation_heatmap.png', dpi=300)
-    print(f"✅ Final Comparison saved to {FIGURES_DIR}")
-    
+    plt.savefig(FIGURES_DIR / 'final_triangulation_heatmap.png', dpi=300)    
     # 9. Output Summary for the Case Study
-    print("\n--- Final Alignment Summary ---")
+    print("--- Final Alignment Summary ---")
     for emo_state in comparison.index:
         best_match = comparison.columns[comparison.loc[emo_state].argmax()]
         strength = comparison.loc[emo_state].max()
