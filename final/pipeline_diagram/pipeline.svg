@@ -290,7 +290,7 @@
 <title>ext_eval</title>
 <polygon fill="#b2ebf2" stroke="black" points="2149.8,-203 1987.55,-203 1987.55,-163 2149.8,-163 2149.8,-203"/>
 <text xml:space="preserve" text-anchor="start" x="2013.18" y="-188.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">External Evaluation</text>
-<text xml:space="preserve" text-anchor="start" x="2047.68" y="-178.5" font-family="Helvetica,sans-Serif" font-size="10.00">ARI, NMI</text>
+<text xml:space="preserve" text-anchor="start" x="2060.05" y="-178.5" font-family="Helvetica,sans-Serif" font-size="10.00">ARI</text>
 <text xml:space="preserve" text-anchor="start" x="1995.55" y="-168.5" font-family="Helvetica,sans-Serif" font-size="10.00">vs Phase / Round / Cohort / Role</text>
 </g>
 <!-- assignments&#45;&gt;ext_eval -->

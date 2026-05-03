@@ -151,7 +151,7 @@ def build_graph() -> graphviz.Digraph:
     # ── External Evaluation ────────────────────────────────────────
     g.node("ext_eval",
            label='<<B>External Evaluation</B><BR/>'
-                 '<FONT POINT-SIZE="10">ARI, NMI</FONT><BR/>'
+                 '<FONT POINT-SIZE="10">ARI</FONT><BR/>'
                  '<FONT POINT-SIZE="10">vs Phase / Round / Cohort / Role</FONT>>',
            fillcolor=C_EVAL)
 

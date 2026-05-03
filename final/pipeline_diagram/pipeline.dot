@@ -43,7 +43,7 @@ digraph cda2_pipeline {
 		kselect_bic [label=<<B>k-Selection</B><BR/><FONT POINT-SIZE="10">BIC</FONT><BR/><FONT POINT-SIZE="10">GMM</FONT>> fillcolor="#fff9c4"]
 	}
 	assignments [label=<<B>Cluster Assignments</B><BR/><FONT POINT-SIZE="10">hard labels (K-Means, K-Medoids, Hier, DBSCAN)</FONT><BR/><FONT POINT-SIZE="10">soft probabilities (GMM)</FONT>> fillcolor="#e8e8e8"]
-	ext_eval [label=<<B>External Evaluation</B><BR/><FONT POINT-SIZE="10">ARI, NMI</FONT><BR/><FONT POINT-SIZE="10">vs Phase / Round / Cohort / Role</FONT>> fillcolor="#b2ebf2"]
+	ext_eval [label=<<B>External Evaluation</B><BR/><FONT POINT-SIZE="10">ARI</FONT><BR/><FONT POINT-SIZE="10">vs Phase / Round / Cohort / Role</FONT>> fillcolor="#b2ebf2"]
 	disc [label=<<B>Feature Discriminability</B><BR/><FONT POINT-SIZE="10">Mann-Whitney U + Cohen's d</FONT><BR/><FONT POINT-SIZE="10">on original normalised features</FONT>> fillcolor="#ffe0b2"]
 	subgraph cluster_legend {
 		color="#aaaaaa" label="" style=dashed
