@@ -102,40 +102,40 @@
 
 ### Contingency Tables & Metrics
 **Target: Phase**  
-- ARI: `0.0339` | NMI: `0.0460` | p-value: `9.4077e-06` | Cramer's V: `0.2724`
+- ARI: `0.0315` | NMI: `0.0456` | p-value: `1.0038e-05` | Cramer's V: `0.2716`
 
 |   GMM_Bio_Cluster |   phase1 |   phase2 |   phase3 |
 |------------------:|---------:|---------:|---------:|
-|                 0 |       91 |       60 |       75 |
-|                 1 |       13 |       44 |       29 |
+|                 0 |       92 |       62 |       79 |
+|                 1 |       12 |       42 |       25 |
 
 **Target: Cohort**  
-- ARI: `0.0009` | NMI: `0.0021` | p-value: `9.1373e-01` | Cramer's V: `0.0692`
+- ARI: `-0.0029` | NMI: `0.0016` | p-value: `9.5382e-01` | Cramer's V: `0.0595`
 
 |   GMM_Bio_Cluster |   D1_1 |   D1_2 |   D1_3 |   D1_4 |   D1_5 |   D1_6 |
 |------------------:|-------:|-------:|-------:|-------:|-------:|-------:|
-|                 0 |     73 |     49 |     34 |     35 |     17 |     18 |
-|                 1 |     23 |     23 |     14 |     13 |      7 |      6 |
+|                 0 |     73 |     52 |     34 |     37 |     18 |     19 |
+|                 1 |     23 |     20 |     14 |     11 |      6 |      5 |
 
 **Target: Round**  
-- ARI: `0.0265` | NMI: `0.0405` | p-value: `1.0767e-05` | Cramer's V: `0.2873`
+- ARI: `0.0225` | NMI: `0.0378` | p-value: `2.7753e-05` | Cramer's V: `0.2761`
 
 |   GMM_Bio_Cluster |   round_1 |   round_2 |   round_3 |   round_4 |
 |------------------:|----------:|----------:|----------:|----------:|
-|                 0 |        40 |        59 |        67 |        60 |
-|                 1 |        38 |        19 |        11 |        18 |
+|                 0 |        43 |        59 |        68 |        63 |
+|                 1 |        35 |        19 |        10 |        15 |
 
 ### Top 5 Discriminating Original Features (Mann-Whitney U)
 |   Cluster | Feature            |       p-val |   Cohens_d |
 |----------:|:-------------------|------------:|-----------:|
-|         0 | EDA_TD_P_Peaks     | 4.41676e-07 |   0.688835 |
-|         0 | EDA_TD_T_Slope_max | 4.41001e-12 |   0.677866 |
-|         0 | EDA_TD_P_Skew      | 6.03448e-08 |   0.660402 |
-|         0 | EDA_TD_P_Kurtosis  | 4.98875e-09 |   0.635257 |
-|         0 | EDA_TD_P_Slope_min | 2.53119e-10 |   0.626738 |
-|         1 | EDA_TD_P_Peaks     | 4.41676e-07 |   0.688835 |
-|         1 | EDA_TD_T_Slope_max | 4.41001e-12 |   0.677866 |
-|         1 | EDA_TD_P_Skew      | 6.03448e-08 |   0.660402 |
-|         1 | EDA_TD_P_Kurtosis  | 4.98875e-09 |   0.635257 |
-|         1 | EDA_TD_P_Slope_min | 2.53119e-10 |   0.626738 |
+|         0 | EDA_TD_P_Peaks     | 7.91963e-07 |   0.694186 |
+|         0 | EDA_TD_T_Slope_max | 2.19267e-10 |   0.652064 |
+|         0 | EDA_TD_P_Kurtosis  | 4.15422e-08 |   0.647406 |
+|         0 | EDA_TD_P_Skew      | 4.10129e-07 |   0.639613 |
+|         0 | EDA_TD_T_Slope_min | 1.04205e-08 |   0.555919 |
+|         1 | EDA_TD_P_Peaks     | 7.91963e-07 |   0.694186 |
+|         1 | EDA_TD_T_Slope_max | 2.19267e-10 |   0.652064 |
+|         1 | EDA_TD_P_Kurtosis  | 4.15422e-08 |   0.647406 |
+|         1 | EDA_TD_P_Skew      | 4.10129e-07 |   0.639613 |
+|         1 | EDA_TD_T_Slope_min | 1.04205e-08 |   0.555919 |
 

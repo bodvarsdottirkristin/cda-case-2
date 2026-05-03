@@ -131,7 +131,7 @@ def run_analysis_pipeline(df_reduced, df_orig, file_name, out_dir):
         models_bio = {
             'K-Means': KMeans(n_clusters=best_ks_bio['K-Means'], random_state=42, n_init=10),
             'K-Medoids': KMedoids(n_clusters=best_ks_bio['K-Medoids'], random_state=42, method='pam'),
-            'GMM': GaussianMixture(n_components=best_ks_bio['GMM'], random_state=42)
+            'GMM': GaussianMixture(n_components=best_ks_bio['GMM'], random_state=42, covariance_type='diag')
         }
         
         models_cols_bio = {}

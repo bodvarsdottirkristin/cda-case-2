@@ -8,25 +8,36 @@ from sklearn.cluster import KMeans
 from sklearn_extra.cluster import KMedoids
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, silhouette_score
+from scipy.stats import chi2_contingency
 
 warnings.filterwarnings('ignore')
 
-def evaluate_best_combinations(data_paths, target_col='Phase', max_k=5):
+def calculate_cramers_v(contingency_table):
+    chi2 = chi2_contingency(contingency_table)[0]
+    n = contingency_table.sum().sum()
+    if n == 0: return 0
+    phi2 = chi2 / n
+    r, k = contingency_table.shape
+    phi2corr = max(0, phi2 - ((k-1)*(r-1))/(n-1))
+    rcorr = r - ((r-1)**2)/(n-1)
+    kcorr = k - ((k-1)**2)/(n-1)
+    denom = min((kcorr-1), (rcorr-1))
+    return np.sqrt(phi2corr / denom) if denom > 0 else 0
+
+def evaluate_best_combinations(data_paths, target_cols=['Phase', 'Cohort', 'Puzzler', 'Round'], max_k=5):
     results = []
     questionnaire_cols = ['Frustrated', 'upset', 'hostile', 'alert', 'ashamed', 'inspired', 'nervous', 'attentive', 'afraid', 'active', 'determined']
-    meta_cols = ['original ID', 'raw_data Path', 'Team ID', 'Individual', 'Phase', 'Cohort', 'Round', 'Role', 'Puzzler'] + questionnaire_cols
+    meta_cols = ['original ID', 'raw_data Path', 'Team ID', 'Individual', 'Phase', 'phase', 'Cohort', 'Round', 'Role', 'Puzzler'] + questionnaire_cols
 
     for path in data_paths:
         if not path.exists():
             continue
             
         df = pd.read_csv(path)
-        if 'phase' in df.columns:
-            df.rename(columns={'phase': 'Phase'}, inplace=True)
-
+        if 'phase' in df.columns: df.rename(columns={'phase': 'Phase'}, inplace=True)
+        
         features = [c for c in df.select_dtypes(include=[np.number]).columns if c not in meta_cols]
-        if len(features) < 2:
-            continue
+        if len(features) < 2: continue
             
         X = StandardScaler().fit_transform(df[features].fillna(df[features].median()))
 
@@ -34,22 +45,22 @@ def evaluate_best_combinations(data_paths, target_col='Phase', max_k=5):
             best_k = 2
             best_val_score = -np.inf if model_name != 'GMM' else np.inf
 
-            # 1. Find optimal K
             for k in range(2, max_k + 1):
-                if model_name == 'K-Means':
-                    labels = KMeans(n_clusters=k, random_state=42, n_init=10).fit_predict(X)
-                    score = silhouette_score(X, labels)
-                    if score > best_val_score: best_k, best_val_score = k, score
-                elif model_name == 'K-Medoids':
-                    labels = KMedoids(n_clusters=k, random_state=42, method='pam').fit_predict(X)
-                    score = silhouette_score(X, labels)
-                    if score > best_val_score: best_k, best_val_score = k, score
-                else:
-                    gmm = GaussianMixture(n_components=k, random_state=42).fit(X)
-                    score = gmm.bic(X)
-                    if score < best_val_score: best_k, best_val_score = k, score
+                try:
+                    if model_name == 'K-Means':
+                        m = KMeans(n_clusters=k, random_state=42, n_init=10).fit(X)
+                        score = silhouette_score(X, m.labels_)
+                        if score > best_val_score: best_k, best_val_score = k, score
+                    elif model_name == 'K-Medoids':
+                        m = KMedoids(n_clusters=k, random_state=42, method='pam').fit(X)
+                        score = silhouette_score(X, m.labels_)
+                        if score > best_val_score: best_k, best_val_score = k, score
+                    else:
+                        gmm = GaussianMixture(n_components=k, random_state=42).fit(X)
+                        score = gmm.bic(X)
+                        if score < best_val_score: best_k, best_val_score = k, score
+                except: continue
 
-            # 2. Fit with best K and evaluate external alignment
             if model_name == 'K-Means':
                 final_labels = KMeans(n_clusters=best_k, random_state=42, n_init=10).fit_predict(X)
             elif model_name == 'K-Medoids':
@@ -57,21 +68,35 @@ def evaluate_best_combinations(data_paths, target_col='Phase', max_k=5):
             else:
                 final_labels = GaussianMixture(n_components=best_k, random_state=42).fit_predict(X)
 
-            ari = adjusted_rand_score(df[target_col].astype(str), final_labels)
-            nmi = normalized_mutual_info_score(df[target_col].astype(str), final_labels)
+            for target in target_cols:
+                if target not in df.columns: continue
+                
+                y_true = df[target].astype(str)
+                ari = adjusted_rand_score(y_true, final_labels)
+                nmi = normalized_mutual_info_score(y_true, final_labels)
+                
+                contingency_table = pd.crosstab(y_true, final_labels)
+                chi2, p_val, _, _ = chi2_contingency(contingency_table)
+                v_cramer = calculate_cramers_v(contingency_table)
 
-            results.append({
-                'Decomposition': path.stem,
-                'Model': model_name,
-                'Optimal_K': best_k,
-                'Phase_ARI': ari,
-                'Phase_NMI': nmi
-            })
+                results.append({
+                    'Target_Variable': target,
+                    'Decomposition': path.stem,
+                    'Model': model_name,
+                    'Optimal_K': best_k,
+                    'ARI': ari,
+                    'NMI': nmi,
+                    'Chi2_p-value': p_val,
+                    'Cramers_V': v_cramer
+                })
 
-    return pd.DataFrame(results).sort_values(by=['Phase_ARI', 'Phase_NMI'], ascending=[False, False])
+    if not results: return pd.DataFrame()
+    
+    return pd.DataFrame(results).sort_values(by=['ARI', 'Cramers_V'], ascending=[False, False])
 
 if __name__ == "__main__":
-    PROJECT_ROOT = Path(os.getcwd()).resolve().parents[1] 
+    current_file = Path(__file__).resolve()
+    PROJECT_ROOT = current_file.parents[2]
     
     data_paths = [
         PROJECT_ROOT / 'data' / 'processed' / 'final' / 'HR_data_pca.csv', 
@@ -79,13 +104,19 @@ if __name__ == "__main__":
         PROJECT_ROOT / 'data' / 'processed' / 'final' / 'HR_data_umap.csv'
     ]
 
-    print("Evaluating combinations...")
-    leaderboard = evaluate_best_combinations(data_paths, target_col='Phase', max_k=5)
+    targets = ['Phase', 'Cohort', 'Puzzler', 'Round']
+    leaderboard = evaluate_best_combinations(data_paths, target_cols=targets)
     
-    print("\n--- LEADERBOARD (Sorted by best Phase Alignment) ---")
-    print(leaderboard.to_string(index=False))
-    
-    # Save the leaderboard
-    out_dir = PROJECT_ROOT / 'final' / 'clustering' / 'results'
-    out_dir.mkdir(parents=True, exist_ok=True)
-    leaderboard.to_csv(out_dir / '0_combination_leaderboard.csv', index=False)
+    if not leaderboard.empty:
+        out_dir = current_file.parent / 'results'
+        out_dir.mkdir(parents=True, exist_ok=True)
+        csv_path = out_dir / '0_combination_leaderboard.csv'
+        
+        leaderboard.to_csv(csv_path, index=False)
+        
+        print("\n--- GLOBAL LEADERBOARD (Sorted by ARI) ---")
+        # Mostra le prime 15 posizioni per brevità nel terminale
+        print(leaderboard.head(15).to_string(index=False))
+        print(f"\nLeaderboard saved in: {csv_path}")
+    else:
+        print("No results generated.")
