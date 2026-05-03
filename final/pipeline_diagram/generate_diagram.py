@@ -36,7 +36,7 @@ def build_graph() -> graphviz.Digraph:
     g.node("input",
            label='<<B>HR_data_2.csv</B><BR/>'
                  '<FONT POINT-SIZE="10">312 obs (26 participants &#215; 4 rounds &#215; 3 phases)</FONT><BR/>'
-                 '<FONT POINT-SIZE="10">51 biosignal features</FONT>>',
+                 '<FONT POINT-SIZE="10">71 columns (51 biosignal + 20 metadata/questionnaire)</FONT>>',
            fillcolor=C_NEUTRAL)
 
     # ── Preprocessing ──────────────────────────────────────────────

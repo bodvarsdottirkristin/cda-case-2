@@ -1,7 +1,7 @@
 digraph cda2_pipeline {
 	fontname=Helvetica nodesep=0.5 rankdir=LR ranksep=0.7 splines=polyline
 	node [fontname=Helvetica fontsize=12 shape=box style=filled]
-	input [label=<<B>HR_data_2.csv</B><BR/><FONT POINT-SIZE="10">312 obs (26 participants &#215; 4 rounds &#215; 3 phases)</FONT><BR/><FONT POINT-SIZE="10">51 biosignal features</FONT>> fillcolor="#e8e8e8"]
+	input [label=<<B>HR_data_2.csv</B><BR/><FONT POINT-SIZE="10">312 obs (26 participants &#215; 4 rounds &#215; 3 phases)</FONT><BR/><FONT POINT-SIZE="10">71 columns (51 biosignal + 20 metadata/questionnaire)</FONT>> fillcolor="#e8e8e8"]
 	subgraph cluster_preprocess {
 		color="#aaaaaa" fontname=Helvetica fontsize=11 label=Preprocessing labeljust=l labelloc=t style=dashed
 		exclude [label=<<B>Exclude</B><BR/><FONT POINT-SIZE="10">metadata + questionnaire items</FONT>> fillcolor="#c8e6c9"]
