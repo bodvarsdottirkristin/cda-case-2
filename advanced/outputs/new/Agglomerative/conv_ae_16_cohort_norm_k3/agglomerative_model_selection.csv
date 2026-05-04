@@ -1,2 +1,0 @@
-n_clusters,silhouette,linkage,standardize_features
-3,0.2715923488140106,ward,False
