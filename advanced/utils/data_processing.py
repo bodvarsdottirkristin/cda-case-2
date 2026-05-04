@@ -8,11 +8,14 @@ It does:
 2. Load HR, EDA, and TEMP files for every cohort/individual/round/phase.
 3. Resample each signal to 1 Hz.
 4. Attach questionnaire values as phase-level metadata.
-5. Standardize inconsistent role columns:
+5. Extract the real participant identifier:
+       participant_ID / particpant_ID -> participant_ID
+6. Standardize inconsistent role columns:
        puzzler / Puzzler / parent / Parent -> Puzzler
-6. Create overlapping windows.
-7. Standardize each signal channel globally.
-8. Convert windows to Conv1D format when requested.
+7. Create overlapping windows grouped by:
+       participant_ID + Cohort + Round + Phase
+8. Standardize each signal channel globally.
+9. Convert windows to Conv1D format when requested.
 
 It does NOT:
 - define neural network models,
@@ -36,15 +39,27 @@ from sklearn.preprocessing import StandardScaler
 
 
 SIGNALS: tuple[str, ...] = ("HR", "EDA", "TEMP")
-META_KEYS: tuple[str, ...] = ("Cohort", "Individual", "Round", "Phase")
 
-# These columns are metadata/role columns, not questionnaire/emotion scores.
-# Important: in some response.csv files the role variable appears as "puzzler",
-# while in others it appears as "parent". We merge both into a single column:
-# "Puzzler".
-RESPONSE_META_COLS: tuple[str, ...] = (
-    "particpant_ID",  # typo appears in some files
+# Use the real participant_ID from response.csv for grouping.
+# Keep Cohort because it represents recording/session context.
+# Do NOT use folder-level Individual for grouping, because it is not globally unique.
+META_KEYS: tuple[str, ...] = ("participant_ID", "Cohort", "Round", "Phase")
+
+PARTICIPANT_ID_COLUMNS: tuple[str, ...] = (
     "participant_ID",
+    "particpant_ID",  # typo appears in some files
+)
+
+PUZZLER_ROLE_COLUMNS: tuple[str, ...] = (
+    "puzzler",
+    "Puzzler",
+    "parent",
+    "Parent",
+)
+
+RESPONSE_META_COLS: tuple[str, ...] = (
+    "participant_ID",
+    "particpant_ID",
     "puzzler",
     "Puzzler",
     "parent",
@@ -54,23 +69,7 @@ RESPONSE_META_COLS: tuple[str, ...] = (
 )
 
 
-PUZZLER_ROLE_COLUMNS: tuple[str, ...] = (
-    "puzzler",
-    "Puzzler",
-    "parent",
-    "Parent",
-)
-
-
 def infer_project_root() -> Path:
-    """
-    Infer project root when this file is placed in:
-
-        project_root/advanced/utils/data_processing.py
-
-    Returns:
-        project_root
-    """
     here = Path(__file__).resolve()
 
     for parent in here.parents:
@@ -87,14 +86,7 @@ def _get_first_existing_column(
     df: pd.DataFrame,
     possible_names: Sequence[str],
 ) -> str | None:
-    """
-    Return the first matching column name, ignoring capitalization.
-
-    Example:
-        possible_names = ("puzzler", "Puzzler", "parent", "Parent")
-
-    If the dataframe contains "Parent", this returns "Parent".
-    """
+    """Return the first matching column name, ignoring capitalization."""
     lower_to_original = {col.lower(): col for col in df.columns}
 
     for name in possible_names:
@@ -105,12 +97,7 @@ def _get_first_existing_column(
 
 
 def _read_response_csv(response_csv: Path) -> pd.DataFrame:
-    """
-    Read response.csv robustly.
-
-    Some files contain an unnamed index column, so we first try index_col=0,
-    then fall back to a normal read.
-    """
+    """Read response.csv robustly."""
     try:
         return pd.read_csv(response_csv, index_col=0)
     except Exception:
@@ -124,9 +111,6 @@ def _read_signal_csv(csv_path: Path, signal: str) -> pd.DataFrame:
     Expected columns:
         time
         <signal>
-
-    Some files may contain an unnamed index column, so we first try reading
-    with index_col=0 and then fall back to a normal read.
     """
     read_attempts = (
         {"index_col": 0},
@@ -169,23 +153,8 @@ def load_phase(
     """
     Load and merge signals for one phase.
 
-    Parameters
-    ----------
-    phase_dir:
-        Folder containing HR.csv, EDA.csv, TEMP.csv, and optionally response.csv.
-    cohort, individual, round_, phase:
-        Metadata from the folder hierarchy.
-    signals:
-        Signal files to load.
-    resample_rule:
-        Pandas resampling rule. Default "1s" gives 1 Hz data.
-
-    Returns
-    -------
-    pd.DataFrame
-        One row per resampled timestamp, including signal columns, metadata,
-        one standardized role column called Puzzler, and questionnaire columns
-        when available.
+    Folder-level Individual is kept as metadata only.
+    The real subject identifier is participant_ID from response.csv.
     """
     dfs: dict[str, pd.Series] = {}
 
@@ -214,8 +183,9 @@ def load_phase(
     merged.index.name = "time"
     merged = merged.reset_index()
 
+    # Folder metadata
     merged["Cohort"] = cohort
-    merged["Individual"] = individual
+    merged["Individual"] = individual  # kept only for debugging/reference
     merged["Round"] = round_
     merged["Phase"] = phase
 
@@ -225,13 +195,16 @@ def load_phase(
         resp = _read_response_csv(response_csv)
 
         if len(resp) > 0:
-            # ---------------------------------------------------------
-            # Standardize the role variable.
-            #
-            # Some response.csv files use "puzzler", others use "parent".
-            # In this project, these refer to the same role information.
-            # We merge them into one clean column: "Puzzler".
-            # ---------------------------------------------------------
+            participant_col = _get_first_existing_column(
+                resp,
+                PARTICIPANT_ID_COLUMNS,
+            )
+
+            if participant_col is not None:
+                merged["participant_ID"] = resp[participant_col].iloc[0]
+            else:
+                merged["participant_ID"] = np.nan
+
             puzzler_col = _get_first_existing_column(
                 resp,
                 PUZZLER_ROLE_COLUMNS,
@@ -242,12 +215,6 @@ def load_phase(
             else:
                 merged["Puzzler"] = np.nan
 
-            # ---------------------------------------------------------
-            # Add questionnaire/emotion variables.
-            #
-            # Exclude all metadata/role columns, including parent, because
-            # parent has already been merged into Puzzler.
-            # ---------------------------------------------------------
             response_meta_cols_lower = {
                 col.lower() for col in RESPONSE_META_COLS
             }
@@ -260,7 +227,9 @@ def load_phase(
 
             for col in questionnaire_cols:
                 merged[col] = resp[col].iloc[0]
+
     else:
+        merged["participant_ID"] = np.nan
         merged["Puzzler"] = np.nan
 
     return merged
@@ -271,21 +240,6 @@ def load_raw_dataset(
     signals: Sequence[str] = SIGNALS,
     resample_rule: str = "1s",
 ) -> pd.DataFrame:
-    """
-    Load all available phase data from the raw dataset folder.
-
-    Expected layout:
-
-        dataset/
-        └── Cohort/
-            └── ID_x/
-                └── Round/
-                    └── Phase/
-                        ├── HR.csv
-                        ├── EDA.csv
-                        ├── TEMP.csv
-                        └── response.csv
-    """
     dataset_dir = Path(dataset_dir)
 
     if not dataset_dir.exists():
@@ -340,7 +294,6 @@ def load_raw_dataset(
 
 
 def _safe_first_value(series: pd.Series):
-    """Return the first non-null value, or NaN if none exists."""
     non_null = series.dropna()
 
     if len(non_null) == 0:
@@ -358,21 +311,12 @@ def create_windows(
     keep_extra_phase_metadata: bool = True,
 ) -> tuple[np.ndarray, pd.DataFrame]:
     """
-    Create overlapping fixed-length windows from the resampled signals.
+    Create overlapping fixed-length windows.
 
-    Default:
-        60-second windows
-        30-second step size
-        skip windows containing NaNs
+    Windows are grouped by META_KEYS:
+        participant_ID + Cohort + Round + Phase
 
-    Returns
-    -------
-    X_raw:
-        Array with shape:
-            n_windows x window_size x n_signals
-
-    window_meta:
-        DataFrame with one row per window.
+    This prevents mixing data from different real participants.
     """
     required = set(signal_cols).union(meta_keys)
     missing = sorted(required.difference(df.columns))
@@ -387,7 +331,8 @@ def create_windows(
 
     if keep_extra_phase_metadata:
         extra_meta_cols = [
-            col for col in df.columns if col not in excluded_extra_cols
+            col for col in df.columns
+            if col not in excluded_extra_cols and col != "Individual"
         ]
     else:
         extra_meta_cols = []
@@ -448,15 +393,6 @@ def create_windows(
 def scale_windows_global(
     X_raw: np.ndarray,
 ) -> tuple[np.ndarray, StandardScaler]:
-    """
-    Standardize each signal channel globally across all windows and time points.
-
-    Input shape:
-        N x T x C
-
-    Output shape:
-        N x T x C
-    """
     if X_raw.ndim != 3:
         raise ValueError("X_raw must have shape (n_windows, window_size, n_signals)")
 
@@ -472,15 +408,6 @@ def scale_windows_global(
 
 
 def to_conv1d_format(X: np.ndarray) -> np.ndarray:
-    """
-    Convert windows from:
-
-        N x T x C
-
-    to PyTorch Conv1D format:
-
-        N x C x T
-    """
     if X.ndim != 3:
         raise ValueError("X must have shape (n_windows, window_size, n_signals)")
 
@@ -495,28 +422,6 @@ def build_autoencoder_input(
     step_size: int = 30,
     resample_rule: str = "1s",
 ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame, pd.DataFrame, StandardScaler]:
-    """
-    Run the full data-only pipeline.
-
-    Returns
-    -------
-    X_raw:
-        Raw windows with shape:
-            N x T x C
-
-    X_scaled:
-        Globally standardized windows with shape:
-            N x T x C
-
-    window_meta:
-        One row of metadata per window.
-
-    full_resampled_df:
-        Full 1 Hz dataframe before windowing.
-
-    scaler:
-        Fitted StandardScaler.
-    """
     full_resampled_df = load_raw_dataset(
         dataset_dir=dataset_dir,
         signals=signals,
@@ -537,12 +442,6 @@ def build_autoencoder_input(
 
 
 def parse_args() -> argparse.Namespace:
-    """
-    Optional CLI for checking preprocessing only.
-
-    This does not save files. It only prints a summary.
-    The actual reusable processed cache is saved by v1_autoencoding.py.
-    """
     project_root = infer_project_root()
     default_dataset_dir = project_root / "data" / "raw" / "data" / "dataset"
 
@@ -572,11 +471,6 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """
-    Run preprocessing only and print a summary.
-
-    No files are saved from this module.
-    """
     args = parse_args()
 
     print(f"Loading raw dataset from: {args.dataset_dir}")
@@ -595,15 +489,28 @@ def main() -> None:
         f"{X_raw.shape[1]} seconds x {X_raw.shape[2]} signals"
     )
     print(f"Metadata rows: {len(window_meta):,}")
+    print(f"Grouping keys used: {META_KEYS}")
+
+    if "participant_ID" in window_meta.columns:
+        print("participant_ID values:")
+        print(window_meta["participant_ID"].value_counts(dropna=False))
+    else:
+        print("Warning: participant_ID column not found in window metadata.")
+
+    if "Individual" in window_meta.columns:
+        print("Folder-level Individual values:")
+        print(window_meta["Individual"].value_counts(dropna=False))
 
     if "Puzzler" in window_meta.columns:
         print("Puzzler values:")
         print(window_meta["Puzzler"].value_counts(dropna=False))
+    else:
+        print("Warning: Puzzler column not found in window metadata.")
 
-    if "parent" in window_meta.columns:
+    if "parent" in window_meta.columns or "Parent" in window_meta.columns:
         print(
-            "Warning: column 'parent' is still present in window metadata. "
-            "It should normally be merged into 'Puzzler'."
+            "Warning: parent/Parent is still present in window metadata. "
+            "It should normally be merged into Puzzler."
         )
 
     print("No files were saved. v1_autoencoding.py handles the processed-data cache.")

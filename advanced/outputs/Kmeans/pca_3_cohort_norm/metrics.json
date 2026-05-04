@@ -1,0 +1,15 @@
+{
+  "model": "PCA",
+  "n_components": 3,
+  "representation": "flattened 60-second HR/EDA/TEMP windows",
+  "aggregation": "mean PCA scores per Cohort/participant_ID/Round/Phase",
+  "processed_file": "data/processed/autoencoder/autoencoder_windows_cohort_norm.npz",
+  "output_dir": "advanced/outputs/new/PCA/pca_3_cohort_norm",
+  "standardize_flattened_features": false,
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 3,
+  "best_silhouette": 0.315055787563324,
+  "cumulative_explained_variance": 0.9658350944519043,
+  "note": "K-Means was fitted on phase-level PCA scores."
+}

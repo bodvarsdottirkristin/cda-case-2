@@ -1,0 +1,17 @@
+{
+  "model": "GMM",
+  "input_representation_dir": "advanced/outputs/new/LSTM/lstm_ae_16_cohort_round_norm",
+  "clustering_method": "GaussianMixture",
+  "covariance_type": "full",
+  "standardize_features": false,
+  "selection_metric": "bic",
+  "k_min": 2,
+  "k_max": 8,
+  "best_k": 6,
+  "best_silhouette": 0.2714099586009979,
+  "best_bic": -23392.82940685683,
+  "best_aic": -26825.163330078125,
+  "n_samples": 312,
+  "n_features": 16,
+  "note": "GMM was fitted on an existing phase-level representation. The number of components was selected using the chosen selection_metric. Evaluation should be run with evaluate_clusters.py."
+}

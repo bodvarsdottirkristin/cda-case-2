@@ -7,10 +7,10 @@ used by the Conv1D autoencoder.
 Pipeline:
 
     processed autoencoder windows
-    → flatten each 60 x 3 window into 180 features
-    → PCA on window-level data
-    → average PCA scores per phase
-    → K-Means clustering on phase-level PCA representation
+    -> flatten each 60 x 3 window into 180 features
+    -> PCA on window-level data
+    -> average PCA scores per phase
+    -> K-Means clustering on phase-level PCA representation
 
 The goal is to compare a simple linear representation against the nonlinear
 Conv1D autoencoder.
@@ -30,7 +30,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
 
 
-META_KEYS: tuple[str, ...] = ("Cohort", "Individual", "Round", "Phase")
+META_KEYS: tuple[str, ...] = ("Cohort", "participant_ID", "Round", "Phase")
 
 
 def load_processed_autoencoder_file(
@@ -158,20 +158,24 @@ def aggregate_window_features_per_phase(
     meta_keys: Iterable[str] = META_KEYS,
 ) -> tuple[np.ndarray, pd.DataFrame]:
     """
-    Average window-level features per Cohort/Individual/Round/Phase.
+    Average window-level features per Cohort/participant_ID/Round/Phase.
 
     This mirrors the autoencoder pipeline:
-        window representation → phase-level representation
+        window representation -> phase-level representation
     """
     meta_keys = list(meta_keys)
 
     missing = [col for col in meta_keys if col not in window_meta.columns]
     if missing:
-        raise ValueError(f"Missing metadata columns: {missing}")
+        raise ValueError(
+            f"Missing metadata columns: {missing}. "
+            f"Available columns are: {list(window_meta.columns)}"
+        )
 
     if len(window_features) != len(window_meta):
         raise ValueError(
-            "window_features and window_meta must have the same number of rows."
+            "window_features and window_meta must have the same number of rows. "
+            f"Got {len(window_features)} feature rows and {len(window_meta)} metadata rows."
         )
 
     phase_features: list[np.ndarray] = []

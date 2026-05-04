@@ -1,0 +1,14 @@
+{
+  "model": "AgglomerativeClustering",
+  "input_representation_dir": "advanced/outputs/new/LSTM/lstm_ae_16_cohort_norm",
+  "clustering_method": "AgglomerativeClustering",
+  "linkage": "ward",
+  "standardize_features": false,
+  "n_clusters": 2,
+  "best_k": 2,
+  "silhouette": 0.32451826333999634,
+  "selection_metric": "fixed_n_clusters",
+  "n_samples": 312,
+  "n_features": 16,
+  "note": "Agglomerative clustering was fitted on an existing phase-level representation using a fixed number of clusters. Silhouette is saved only as a geometric diagnostic, not as the model-selection criterion."
+}
