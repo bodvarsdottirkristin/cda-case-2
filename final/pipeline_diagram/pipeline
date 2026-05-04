@@ -1,0 +1,83 @@
+digraph cda2_pipeline {
+	fontname=Helvetica nodesep=0.5 rankdir=LR ranksep=0.7 splines=polyline
+	node [fontname=Helvetica fontsize=12 shape=box style=filled]
+	input [label=<<B>HR_data_2.csv</B><BR/><FONT POINT-SIZE="10">312 obs (26 participants &#215; 4 rounds &#215; 3 phases)</FONT><BR/><FONT POINT-SIZE="10">71 columns (51 biosignal + 20 metadata/questionnaire)</FONT>> fillcolor="#e8e8e8"]
+	subgraph cluster_preprocess {
+		color="#aaaaaa" fontname=Helvetica fontsize=11 label=Preprocessing labeljust=l labelloc=t style=dashed
+		exclude [label=<<B>Exclude</B><BR/><FONT POINT-SIZE="10">metadata + questionnaire items</FONT>> fillcolor="#c8e6c9"]
+		impute [label=<<B>Imputation</B><BR/><FONT POINT-SIZE="10">within-Phase group mean</FONT>> fillcolor="#c8e6c9"]
+		dedup [label=<<B>Redundancy Removal</B><BR/><FONT POINT-SIZE="10">drop |r| &gt; 0.95</FONT>> fillcolor="#c8e6c9"]
+		norm [label=<<B>Individual Normalisation</B><BR/><FONT POINT-SIZE="10">z-score per participant</FONT><BR/><FONT POINT-SIZE="10"><I>states, not traits</I></FONT>> fillcolor="#c8e6c9"]
+		exclude -> impute
+		impute -> dedup
+		dedup -> norm
+	}
+	subgraph cluster_reduction {
+		color="#aaaaaa" fontname=Helvetica fontsize=11 label="Dimensionality Reduction" labeljust=l labelloc=t style=dashed
+		{
+			rank=same
+			pca [label=<<B>PCA</B><BR/><FONT POINT-SIZE="10">16 components</FONT><BR/><FONT POINT-SIZE="10">&#8805;80% variance</FONT>> fillcolor="#d1c4e9"]
+			spca [label=<<B>SparsePCA</B><BR/><FONT POINT-SIZE="10">16 components, &#945;=1</FONT><BR/><FONT POINT-SIZE="10">L1-sparse loadings</FONT>> fillcolor="#d1c4e9"]
+			umap [label=<<B>UMAP</B><BR/><FONT POINT-SIZE="10">10 components</FONT><BR/><FONT POINT-SIZE="10">n_neighbors=50, min_dist=0</FONT>> fillcolor="#d1c4e9"]
+		}
+	}
+	hub_red [label="" fillcolor="#888888" shape=point style=filled width=0.15]
+	subgraph cluster_clustering {
+		color="#aaaaaa" fontname=Helvetica fontsize=11 label=Clustering labeljust=l labelloc=t style=dashed
+		{
+			rank=same
+			hier [label=<<B>Hierarchical</B><BR/><FONT POINT-SIZE="10">Ward linkage</FONT>> fillcolor="#ffcdd2"]
+			kmeans [label=<<B>K-Means</B>> fillcolor="#ffcdd2"]
+			kmed [label=<<B>K-Medoids</B><BR/><FONT POINT-SIZE="10">PAM</FONT>> fillcolor="#ffcdd2"]
+			gmm [label=<<B>GMM</B><BR/><FONT POINT-SIZE="10">full / tied / diag / sph</FONT>> fillcolor="#ffcdd2"]
+			dbscan [label=<<B>DBSCAN</B><BR/><FONT POINT-SIZE="10">grid search &#949;, min_samples</FONT>> fillcolor="#ffcdd2"]
+		}
+		dbscan -> gmm [style=invis]
+		gmm -> kmed [style=invis]
+		kmed -> kmeans [style=invis]
+		kmeans -> hier [style=invis]
+	}
+	{
+		rank=same
+		kselect_sil [label=<<B>k-Selection</B><BR/><FONT POINT-SIZE="10">Silhouette score</FONT><BR/><FONT POINT-SIZE="10">Hierarchical, K-Means, K-Medoids</FONT>> fillcolor="#fff9c4"]
+		kselect_bic [label=<<B>k-Selection</B><BR/><FONT POINT-SIZE="10">BIC</FONT><BR/><FONT POINT-SIZE="10">GMM</FONT>> fillcolor="#fff9c4"]
+	}
+	assignments [label=<<B>Cluster Assignments</B><BR/><FONT POINT-SIZE="10">hard labels (K-Means, K-Medoids, Hier, DBSCAN)</FONT><BR/><FONT POINT-SIZE="10">soft probabilities (GMM)</FONT>> fillcolor="#e8e8e8"]
+	ext_eval [label=<<B>External Evaluation</B><BR/><FONT POINT-SIZE="10">ARI</FONT><BR/><FONT POINT-SIZE="10">vs Phase / Round / Cohort / Role</FONT>> fillcolor="#b2ebf2"]
+	disc [label=<<B>Feature Discriminability</B><BR/><FONT POINT-SIZE="10">Mann-Whitney U + Cohen's d</FONT><BR/><FONT POINT-SIZE="10">on original normalised features</FONT>> fillcolor="#ffe0b2"]
+	subgraph cluster_legend {
+		color="#aaaaaa" label="" style=dashed
+		leg_pre [label=Preprocessing fillcolor="#c8e6c9" fontsize=9 height=0.2 margin="0.04,0.01" width=1.3]
+		leg_red [label="Dim. Reduction" fillcolor="#d1c4e9" fontsize=9 height=0.2 margin="0.04,0.01" width=1.3]
+		leg_cl [label=Clustering fillcolor="#ffcdd2" fontsize=9 height=0.2 margin="0.04,0.01" width=1.3]
+		leg_k [label="k-Selection" fillcolor="#fff9c4" fontsize=9 height=0.2 margin="0.04,0.01" width=1.3]
+		leg_eval [label=Evaluation fillcolor="#b2ebf2" fontsize=9 height=0.2 margin="0.04,0.01" width=1.3]
+		leg_disc [label=Discriminability fillcolor="#ffe0b2" fontsize=9 height=0.2 margin="0.04,0.01" width=1.3]
+		leg_pre -> leg_red [style=invis]
+		leg_red -> leg_cl [style=invis]
+		leg_cl -> leg_k [style=invis]
+		leg_k -> leg_eval [style=invis]
+		leg_eval -> leg_disc [style=invis]
+	}
+	input -> exclude
+	norm -> pca
+	norm -> spca
+	norm -> umap
+	pca -> hub_red [arrowhead=none]
+	spca -> hub_red [arrowhead=none]
+	umap -> hub_red [arrowhead=none]
+	hub_red -> hier
+	hub_red -> kmeans
+	hub_red -> kmed
+	hub_red -> gmm
+	hub_red -> dbscan
+	hier -> kselect_sil
+	kmeans -> kselect_sil
+	kmed -> kselect_sil
+	gmm -> kselect_bic
+	dbscan -> assignments [constraint=false]
+	kselect_sil -> assignments
+	kselect_bic -> assignments
+	assignments -> ext_eval
+	assignments -> disc
+}

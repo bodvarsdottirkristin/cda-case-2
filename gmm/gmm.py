@@ -446,14 +446,80 @@ def plot(results, canvases, meta):
     print(f"Figures saved to {FIGURES_DIR}")
 
 
+def compare_k_umap(X_umap, X_features, k_range=range(2, 8)):
+    records = []
+    feat_df = X_features.copy() if isinstance(X_features, pd.DataFrame) else pd.DataFrame(X_features)
+    feat_df = feat_df.reset_index(drop=True)
+
+    for k in k_range:
+        gmm = GaussianMixture(n_components=k, covariance_type='full',
+                               random_state=42, n_init=5)
+        gmm.fit(X_umap)
+        labels = gmm.predict(X_umap)
+        sil = silhouette_score(X_umap, labels)
+        bic = gmm.bic(X_umap)
+        records.append({'k': k, 'silhouette': round(sil, 4), 'bic': round(bic, 2)})
+        print(f"UMAP k={k}: silhouette={sil:.4f}, BIC={bic:.1f}")
+
+    df_k = pd.DataFrame(records)
+    df_k.to_csv(RESULTS_DIR / 'gmm_umap_k_comparison.csv', index=False)
+
+    # Silhouette + BIC side-by-side
+    _, axes = plt.subplots(1, 2, figsize=(12, 4))
+    colors = plt.cm.tab10.colors
+    axes[0].bar([str(r['k']) for r in records],
+                [r['silhouette'] for r in records],
+                color=colors[:len(records)])
+    axes[0].set(xlabel='k', ylabel='Silhouette score',
+                title='UMAP+GMM — Silhouette vs k')
+    axes[0].grid(True, axis='y')
+    axes[1].plot(df_k['k'], df_k['bic'], marker='o', color=colors[0])
+    axes[1].set(xlabel='k', ylabel='BIC (lower = better)',
+                title='UMAP+GMM — BIC vs k')
+    axes[1].grid(True)
+    plt.tight_layout()
+    plt.savefig(FIGURES_DIR / 'gmm_umap_k_comparison.png', dpi=300)
+    plt.close()
+
+    # Cluster profile heatmaps for k=2 and BIC-optimal k
+    best_k = int(df_k.loc[df_k['bic'].idxmin(), 'k'])
+    for k in sorted({2, best_k}):
+        gmm_k = GaussianMixture(n_components=k, covariance_type='full',
+                                 random_state=42, n_init=5)
+        gmm_k.fit(X_umap)
+        labels_k = gmm_k.predict(X_umap)
+        feat_k = feat_df.copy()
+        feat_k['cluster'] = labels_k
+        cluster_means = feat_k.groupby('cluster').mean()
+
+        fig_w = max(14, len(cluster_means.columns) * 0.38)
+        fig_h = max(3, k * 0.55 + 1.5)
+        plt.figure(figsize=(fig_w, fig_h))
+        sns.heatmap(cluster_means, cmap='RdBu_r', center=0,
+                    linewidths=0.3, annot=False)
+        plt.title(f'UMAP+GMM k={k} — Mean biosignal profile per cluster\n'
+                  f'(individual-wise z-scored; red = above personal baseline)')
+        plt.xlabel('Feature')
+        plt.ylabel('Cluster')
+        plt.xticks(rotation=45, ha='right', fontsize=7)
+        plt.tight_layout()
+        plt.savefig(FIGURES_DIR / f'gmm_umap_k_comparison_profiles_k{k}.png',
+                    dpi=300, bbox_inches='tight')
+        plt.close()
+
+    print(f"k comparison saved to {FIGURES_DIR} and {RESULTS_DIR}")
+    return df_k
+
+
 def main():
     df = load_data()
     X, meta, remaining = preprocess(df)
-    X_pca, X_spca, X_umap, X_2d, X_umap_2d, n_components = reduce(X, remaining)
+    X_pca, X_spca, X_umap, X_2d, X_umap_2d, _ = reduce(X, remaining)
     results = fit_gmm(X_pca, X_spca, X_umap=X_umap)
     evaluate(results, X_pca, X_spca, meta, X_umap=X_umap, X_features=X)
     canvases = {'pca': X_2d, 'spca': X_2d, 'umap': X_umap_2d}
     plot(results, canvases, meta)
+    compare_k_umap(X_umap, X)
     print("GMM clustering complete.")
 
 

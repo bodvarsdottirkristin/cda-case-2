@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.patches import Ellipse
 from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
@@ -21,6 +23,8 @@ PA_ITEMS = ['inspired', 'alert', 'attentive', 'active', 'determined']
 # 'Frustrated' retains its capital-F as it appears in HR_data_2.csv
 NA_ITEMS = ['Frustrated', 'upset', 'hostile', 'ashamed', 'nervous', 'afraid']
 META_COLS = ['Round', 'Phase', 'Individual', 'Puzzler', 'Cohort']
+
+ALL_ITEMS = PA_ITEMS + NA_ITEMS  # all 11 questionnaire items
 
 EMOTIONAL_LABELS = {
     (True,  False): 'Engaged/Calm',
@@ -64,6 +68,91 @@ def fit_gmm_panas(X, k_range=range(2, 7)):
                 best_model = gmm
 
     return best_model, pd.DataFrame(records)
+
+
+def fit_gmm_questionnaire(df, k_range=range(2, 7)):
+    import warnings
+    X_raw = df[ALL_ITEMS].dropna()
+    valid_idx = X_raw.index
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X_raw)
+
+    cov_types = ['full', 'tied', 'diag', 'spherical']
+    best_bic = np.inf
+    best_model = None
+    records = []
+
+    for cov in cov_types:
+        for k in k_range:
+            gmm = GaussianMixture(n_components=k, covariance_type=cov,
+                                  random_state=42, n_init=10)
+            gmm.fit(X)
+            if not gmm.converged_:
+                warnings.warn(f"GMM k={k}, cov={cov} did not converge")
+            bic = gmm.bic(X)
+            records.append({'k': k, 'covariance_type': cov, 'bic': bic})
+            if bic < best_bic:
+                best_bic = bic
+                best_model = gmm
+
+    return best_model, pd.DataFrame(records), X, valid_idx
+
+
+def plot_questionnaire_clusters(df, model, bic_df, X_scaled, valid_idx):
+    colors = plt.cm.tab10.colors
+    k = model.n_components
+    labels = model.predict(X_scaled)
+
+    # BIC curve
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for cov, grp in bic_df.groupby('covariance_type'):
+        ax.plot(grp['k'], grp['bic'], marker='o', label=cov)
+    ax.set(xlabel='k', ylabel='BIC (lower = better)',
+           title='GMM on all 11 questionnaire items — BIC')
+    ax.legend()
+    ax.grid(True)
+    plt.tight_layout()
+    plt.savefig(FIGURES_DIR / 'questionnaire_bic.png', dpi=300)
+    plt.close()
+
+    # Cluster profile heatmap on the 11 items
+    df_q = df.loc[valid_idx].copy().reset_index(drop=True)
+    df_q['q_cluster'] = labels
+    cluster_means = df_q.groupby('q_cluster')[ALL_ITEMS].mean()
+
+    plt.figure(figsize=(max(8, len(ALL_ITEMS) * 0.7), max(3, k * 0.6 + 1.5)))
+    sns.heatmap(cluster_means, cmap='RdBu_r',
+                center=cluster_means.values.mean(),
+                annot=True, fmt='.2f', linewidths=0.5)
+    plt.title(f'GMM k={k}, cov={model.covariance_type} — '
+              f'Mean questionnaire score per cluster')
+    plt.xlabel('Questionnaire Item')
+    plt.ylabel('Cluster')
+    plt.tight_layout()
+    plt.savefig(FIGURES_DIR / 'questionnaire_cluster_profiles.png',
+                dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # PCA 2D scatter for visualization
+    pca_2d = PCA(n_components=2, random_state=42)
+    X_2d = pca_2d.fit_transform(X_scaled)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for c in range(k):
+        mask = labels == c
+        ax.scatter(X_2d[mask, 0], X_2d[mask, 1],
+                   label=f'Cluster {c}', alpha=0.7, s=35, color=colors[c % 10])
+    ax.set(xlabel='PC1 (of questionnaire items)', ylabel='PC2',
+           title=f'GMM clusters — all questionnaire items (k={k})')
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(FIGURES_DIR / 'questionnaire_clusters_pca2d.png', dpi=300)
+    plt.close()
+
+    print(f"Best GMM (11-item): k={k}, cov={model.covariance_type}")
+    print(f"Saved: questionnaire_bic.png, questionnaire_cluster_profiles.png, "
+          f"questionnaire_clusters_pca2d.png")
+    return df_q
 
 
 def label_clusters(means):
@@ -251,6 +340,17 @@ def main():
                              'emotional_cluster_id', 'emotional_cluster'] + \
                [f'prob_emotional_{i}' for i in range(k)]
     df[out_cols].to_csv(PROCESSED_DIR / 'HR_data_panas.csv', index=False)
+    # --- All-item questionnaire clustering ---
+    q_model, q_bic_df, X_q_scaled, valid_idx = fit_gmm_questionnaire(df)
+    df_q = plot_questionnaire_clusters(df, q_model, q_bic_df, X_q_scaled, valid_idx)
+
+    # Save questionnaire cluster assignments for bridge analysis
+    out_q_cols = META_COLS + ['q_cluster']
+    df_q[out_q_cols].to_csv(
+        PROCESSED_DIR / 'HR_data_questionnaire_clusters.csv', index=False
+    )
+    print("Questionnaire clusters saved to HR_data_questionnaire_clusters.csv")
+
     print(f"\nAll outputs saved. Figures: {FIGURES_DIR}  Tables: {RESULTS_DIR}")
 
 
