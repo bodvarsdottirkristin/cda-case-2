@@ -1,6 +1,6 @@
 # CDA Case 2 — EmoPairCompete Clustering Analysis
 
-**Team:** Kristín Böðvarsdóttir, Alessandra Carrara, Kyle Nathan Yahya, NAME4, NAME5, NAME6
+**Team:** Kristín Böðvarsdóttir, Alessandra Carrara, Kyle Nathan Yahya, Valentina Trolese, NAME5, NAME6
 
 ---
 
